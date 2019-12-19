@@ -62,44 +62,56 @@ class dbUtil{
         $result_array = array();
         $connection = dbConnection::connect();
         $sql = "SELECT * FROM discussion";
+        $sql_num = "SELECT COUNT(*) FROM discussion";
         $need_where = true;
         if(array_key_exists("discussion_name", $query_array)){  //if query contains discussion_name
             $name = $query_array["discussion_name"];
             if($need_where){
                 $sql.=" WHERE";
+                $sql_num.="WHERE";
                 $need_where=false;
             }
             $sql.=" discussion_name like '%$name%'";
+            $sql_num.=" discussion_name like '%$name%'";
         }
         if(array_key_exists("label", $query_array)){    //if query contains label
             $label = $query_array["label"];
             if($need_where){
                 $sql.=" WHERE";
+                $sql_num.=" WHERE";
                 $need_where=false;
             }else{
                 $sql.=" AND";
+                $sql_num.=" AND";
             }
             $sql.=" label = '$label'";
+            $sql_num.=" label = '$label'";
         }
-        if(array_key_exists("user_id", $query_array)){    //if query contains label
-            $label = $query_array["user_id"];
+        if(array_key_exists("user_id", $query_array)){    //if query contains user_id
+            $id = $query_array["user_id"];
             if($need_where){
                 $sql.=" WHERE";
+                $sql_num.=" WHERE";
                 $need_where=false;
             }else{
                 $sql.=" AND";
+                $sql_num.=" AND";
             }
-            $sql.=" user_id = '$label'";
+            $sql.=" user_id = '$id'";
+            $sql_num.=" user_id = '$id'";
         }
-        if(array_key_exists("discussion_id", $query_array)){    //if query contains label
+        if(array_key_exists("discussion_id", $query_array)){    //if query contains discussion_id
             $id = $query_array["discussion_id"];
             if($need_where){
                 $sql.=" WHERE";
+                $sql_num.=" WHERE";
                 $need_where=false;
             }else{
                 $sql.=" AND";
+                $sql_num.=" AND";
             }
             $sql.=" discussion_id = '$id'";
+            $sql_num.=" discussion_id = '$id'";
         }
         if(array_key_exists("order", $query_array)){    // oder option
             $order = $query_array["order"];
@@ -125,8 +137,11 @@ class dbUtil{
             $row_array["user"]=dbUtil::searchUserbyId($row["user_id"]);
             array_push($result_array, $row_array);
         }
+        $num_result = mysqli_query($connection, $sql_num);
+        $num_row = $num_result->fetch_row();
+        $return_array = array("total_num"=>$num_row[0], "discussions"=>$result_array);
         mysqli_close($connection);
-        return $result_array;
+        return $return_array;
     }
     
     /*discussion creating*/
@@ -164,6 +179,52 @@ class dbUtil{
         $sql = "DELETE FROM discussion WHERE user_id = '$user_id' and discussion_id = '$discussion_id'";
         mysqli_query($connection, $sql);
         $result = array("state"=>"delete success");
+        mysqli_close($connection);
+        return $result;
+    }
+    
+    /*search comment by id*/
+    public static function searchCommentbyId($comment_id){
+        $connection = dbConnection::connect();
+        $sql = "SELECT * FROM comment WHERE comment_id='$comment_id'";
+        $result = mysqli_query($connection, $sql);
+        if(mysqli_num_rows($result) == 0){
+            mysqli_close($connection);
+            return array("error"=>"search comment_id error");
+        }else{
+            $row=mysqli_fetch_array($result,MYSQLI_ASSOC);
+            $user = dbUtil::searchUserbyId($row['user_id']);
+            $result = (new comment($row['comment_id'],$row['content'],$row['img_url'],$row['created_time'],$row['discussion_id'],NULL,$user))->arrify();
+            mysqli_close($connection);
+            return $result;
+        }
+    }
+    
+    /*comment searching*/
+    public static function comment_search($discussion_id){
+        $connection = dbConnection::connect();
+        $result_array = array();
+        $sql = "SELECT * FROM comment WHERE discussion_id='$discussion_id'";
+        $result = mysqli_query($connection, $sql);
+        while($row=mysqli_fetch_array($result,MYSQLI_ASSOC)){
+            $user = dbUtil::searchUserbyId($row['user_id']);
+            $row_array = (new comment($row['comment_id'],$row['content'],$row['img_url'],$row['created_time'],$row['discussion_id'],NULL,$user))->arrify();
+            if($row['pre_comment_id'] != NULL && $row['pre_comment_id'] !=-1){
+                $row_array['prev_comment'] = dbUtil::searchCommentbyId($row['pre_comment_id']);
+            }
+            array_push($result_array, $row_array);
+        }
+        mysqli_close($connection);
+        return $result_array;
+    }
+    
+    /*comment creating*/
+    public static function comment_create($content, $img_url, $discussion_id, $pre_comment_id, $user_id){
+        $connection = dbConnection::connect();
+        $sql = "INSERT INTO comment (content, img_url, created_time, discussion_id, pre_comment_id, user_id)
+                VALUES ('$content', '$img_url', '". date("Y-m-d h:i"). "', '$discussion_id', '$pre_comment_id', '$user_id' )";
+        mysqli_query($connection, $sql);
+        $result = array("comment_id"=>$connection->insert_id);
         mysqli_close($connection);
         return $result;
     }

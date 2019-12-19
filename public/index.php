@@ -88,7 +88,7 @@ $app->group($COMMON_PATH.'discussion', function (RouteCollectorProxy $group) {
     });
     
     /* router for updating discussion 
-     * ex: [POST]http://localhost/BBS_Server/public/discussion/update?discussion_name=what is CE?&label=graduate study&discription=some contents here.&discussion_id=18
+     * ex: [PUT]http://localhost/BBS_Server/public/discussion/update?discussion_name=what is CE?&label=graduate study&discription=some contents here.&discussion_id=18
      * all attributes MUST BE specified!
      */
     $group->put('/update', function($request, $response, $args) {
@@ -104,22 +104,71 @@ $app->group($COMMON_PATH.'discussion', function (RouteCollectorProxy $group) {
             ->withHeader('Content-Type', 'application/json');
     });
     
-    /* router for updating discussion
-     * ex: [POST]http://localhost/BBS_Server/public/discussion/update?discussion_name=what is CE?&label=graduate study&discription=some contents here.&discussion_id=18
-     * all attributes MUST BE specified!
+    /* router for deleting discussion
+     * ex: [PUT]http://localhost/BBS_Server/public/discussion/delete?discussion_id=18
+     * user session MUST be set
      */
     $group->put('/delete', function($request, $response, $args) {
         $params = $request->getQueryParams();
         if(!isset($_SESSION["user"])){
             $response->getBody()->write(json_encode(array("error"=>"authority error")));
             return $response
-            ->withHeader('Content-Type', 'application/json');
+                ->withHeader('Content-Type', 'application/json');
         }
         $result = dbUtil::discussion_delete($_SESSION["user"]["id"], $params["discussion_id"]);
         $response->getBody()->write(json_encode($result));
         return $response
             ->withHeader('Content-Type', 'application/json');
     });
+});
+
+/*user can only view/add comment
+ *delete/update is not allow 
+ */
+$app->group($COMMON_PATH.'comment', function (RouteCollectorProxy $group) {
+    
+    /* router for search comment by discussion_id
+     * ex: [GET]http://localhost/BBS_Server/public/comment/search?discussion_id=2
+     */
+    $group->get('/search', function ($request, $response, $args) {
+        $params = $request->getQueryParams();
+        if(!array_key_exists("discussion_id", $params)){
+            $response->getBody()->write(json_encode(array("error"=>"wrong parameters")));
+            return $response
+                ->withHeader('Content-Type', 'application/json');
+        }
+        $result = dbUtil::comment_search($params["discussion_id"]);
+        $response->getBody()->write(json_encode($result));
+        return $response
+            ->withHeader('Content-Type', 'application/json');
+    });
+    
+    /* router for search comment by discussion_id
+     * ex: [POST]http://localhost/BBS_Server/public/comment/create?content=what is up&img_url=&discussion_id=2&pre_comment_id=-1
+     * if it is not a reply, you MUST set pre_comment_id as -1
+     */
+    $group->post('/create', function ($request, $response, $args) {
+        $params = $request->getQueryParams();
+        if(!isset($_SESSION["user"])){  // without login
+            $response->getBody()->write(json_encode(array("error"=>"authority error")));
+            return $response
+                ->withHeader('Content-Type', 'application/json');
+        }
+        
+        if(!array_key_exists("content", $params)||!array_key_exists("img_url", $params)
+            ||!array_key_exists("discussion_id", $params)||!array_key_exists("pre_comment_id", $params)){   //wrong parameters 
+            $response->getBody()->write(json_encode(array("error"=>"parameters error")));
+            return $response
+                ->withHeader('Content-Type', 'application/json');
+        }
+        
+        $result = dbUtil::comment_create($params["content"], $params["img_url"], $params["discussion_id"], $params["pre_comment_id"], $_SESSION["user"]["id"]);
+        $response->getBody()->write(json_encode($result));
+        return $response
+            ->withHeader('Content-Type', 'application/json');
+    });
+
+        
 });
 
 
