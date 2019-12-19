@@ -78,10 +78,10 @@ $app->group($COMMON_PATH.'discussion', function (RouteCollectorProxy $group) {
     }); 
     
     /* router for creating discussion
-     *  ex: [POST]http://localhost/BBS_Server/public/discussion/create?user_id=4245&discussion_name=what is the best master program in USA?&label=graduate study&discription=some contents here.*/
+     *  ex: [POST]http://localhost/BBS_Server/public/discussion/create?discussion_name=what is the best master program in USA?&label=graduate study&discription=some contents here.*/
     $group->post('/create', function($request, $response, $args) {
         $params = $request->getQueryParams();
-        $result = dbUtil::discussion_create($params["user_id"], $params["discussion_name"], $params["discription"], $params["label"]);
+        $result = dbUtil::discussion_create($_SESSION["user"]["id"], $params["discussion_name"], $params["discription"], $params["label"]);
         $response->getBody()->write(json_encode($result));
         return $response
             ->withHeader('Content-Type', 'application/json');

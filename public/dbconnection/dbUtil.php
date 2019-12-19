@@ -66,6 +66,7 @@ class dbUtil{
         $need_where = true;
         if(array_key_exists("discussion_name", $query_array)){  //if query contains discussion_name
             $name = $query_array["discussion_name"];
+            $name=mysqli_real_escape_string($connection,$name);
             if($need_where){
                 $sql.=" WHERE";
                 $sql_num.="WHERE";
@@ -147,6 +148,8 @@ class dbUtil{
     /*discussion creating*/
     public static function discussion_create($user_id, $discussion_name, $discription, $label){
         $connection = dbConnection::connect();
+        $discussion_name=mysqli_real_escape_string($connection,$discussion_name);
+        $discription=mysqli_real_escape_string($connection,$discription);
         $sql = "INSERT INTO discussion (discussion_name, discription, comment_number, label, created_time, user_id) 
                 VALUES ('$discussion_name', '$discription', '0', '$label' ,'". date("Y-m-d h:i"). "', '$user_id' )";
         mysqli_query($connection, $sql);
@@ -158,6 +161,8 @@ class dbUtil{
     /*discussion updating*/
     public static function discussion_update($user_id, $discussion_id, $discussion_name, $discription, $label){
         $connection = dbConnection::connect();
+        $discussion_name=mysqli_real_escape_string($connection,$discussion_name);
+        $discription=mysqli_real_escape_string($connection,$discription);
         $auth_sql = "SELECT * FROM discussion WHERE discussion_id='$discussion_id' AND user_id='$user_id'";
         $check = mysqli_query($connection, $auth_sql);
         if(mysqli_num_rows($check) == 0){
@@ -221,10 +226,16 @@ class dbUtil{
     /*comment creating*/
     public static function comment_create($content, $img_url, $discussion_id, $pre_comment_id, $user_id){
         $connection = dbConnection::connect();
+        $content=mysqli_real_escape_string($connection,$content);
         $sql = "INSERT INTO comment (content, img_url, created_time, discussion_id, pre_comment_id, user_id)
                 VALUES ('$content', '$img_url', '". date("Y-m-d h:i"). "', '$discussion_id', '$pre_comment_id', '$user_id' )";
         mysqli_query($connection, $sql);
         $result = array("comment_id"=>$connection->insert_id);
+        
+        //add the comment number of the discussion
+        $inc_sql = "UPDATE discussion SET comment_number = comment_number + 1 WHERE discussion_id='$discussion_id'";
+        mysqli_query($connection, $inc_sql);
+        
         mysqli_close($connection);
         return $result;
     }
