@@ -137,13 +137,14 @@ $app->group($COMMON_PATH.'comment', function (RouteCollectorProxy $group) {
             return $response
                 ->withHeader('Content-Type', 'application/json');
         }
-        $result = dbUtil::comment_search($params["discussion_id"]);
+        $user_id = isset($_SESSION["user"])?$_SESSION["user"]["id"]:NULL;
+        $result = dbUtil::comment_search($params["discussion_id"], $user_id);
         $response->getBody()->write(json_encode($result));
         return $response
             ->withHeader('Content-Type', 'application/json');
     });
     
-    /* router for search comment by discussion_id
+    /* router for create comment 
      * ex: [POST]http://localhost/BBS_Server/public/comment/create?content=what is up&img_url=&discussion_id=2&pre_comment_id=-1
      * if it is not a reply, you MUST set pre_comment_id as -1
      */
@@ -166,6 +167,29 @@ $app->group($COMMON_PATH.'comment', function (RouteCollectorProxy $group) {
         $response->getBody()->write(json_encode($result));
         return $response
             ->withHeader('Content-Type', 'application/json');
+    });
+    
+    /* router for like/unlike comment
+     * ex: http://localhost/BBS_Server/public/comment/like?comment_id=25&like=1
+     * like -> like=1; unlike -> like=-1
+     */
+    $group->post('/like', function ($request, $response, $args) {
+        $params = $request->getQueryParams();
+        if(!isset($_SESSION["user"])){  // without login
+            $response->getBody()->write(json_encode(array("error"=>"authority error")));
+            return $response
+            ->withHeader('Content-Type', 'application/json');
+        }
+        if(!array_key_exists("comment_id", $params)||!array_key_exists("like", $params)){   // wrong parameter
+            $response->getBody()->write(json_encode(array("error"=>"wrong parameters, 'comment_id' and 'like' is required")));
+            return $response
+            ->withHeader('Content-Type', 'application/json');
+        }
+        $result = dbUtil::evaluation_update($params["comment_id"],  $_SESSION["user"]["id"], $params["like"]);
+        $response->getBody()->write(json_encode($result));
+        return $response
+            ->withHeader('Content-Type', 'application/json');
+        
     });
 
         

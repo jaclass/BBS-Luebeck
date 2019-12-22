@@ -199,24 +199,25 @@ class dbUtil{
         }else{
             $row=mysqli_fetch_array($result,MYSQLI_ASSOC);
             $user = dbUtil::searchUserbyId($row['user_id']);
-            $result = (new comment($row['comment_id'],$row['content'],$row['img_url'],$row['created_time'],$row['discussion_id'],NULL,$user))->arrify();
+            $result = (new comment($row['comment_id'],$row['content'],$row['img_url'],$row['created_time'],$row['discussion_id'],NULL,$user,$row['like_number']))->arrify();
             mysqli_close($connection);
             return $result;
         }
     }
     
     /*comment searching*/
-    public static function comment_search($discussion_id){
+    public static function comment_search($discussion_id, $user_id){
         $connection = dbConnection::connect();
         $result_array = array();
         $sql = "SELECT * FROM comment WHERE discussion_id='$discussion_id'";
         $result = mysqli_query($connection, $sql);
         while($row=mysqli_fetch_array($result,MYSQLI_ASSOC)){
             $user = dbUtil::searchUserbyId($row['user_id']);
-            $row_array = (new comment($row['comment_id'],$row['content'],$row['img_url'],$row['created_time'],$row['discussion_id'],NULL,$user))->arrify();
+            $row_array = (new comment($row['comment_id'],$row['content'],$row['img_url'],$row['created_time'],$row['discussion_id'],NULL,$user,$row['like_number']))->arrify();
             if($row['pre_comment_id'] != NULL && $row['pre_comment_id'] !=-1){
                 $row_array['prev_comment'] = dbUtil::searchCommentbyId($row['pre_comment_id']);
             }
+            $row_array['isliked_by_user'] = !dbUtil::evaluation_check($row['comment_id'], $user_id);
             array_push($result_array, $row_array);
         }
         mysqli_close($connection);
@@ -227,8 +228,8 @@ class dbUtil{
     public static function comment_create($content, $img_url, $discussion_id, $pre_comment_id, $user_id){
         $connection = dbConnection::connect();
         $content=mysqli_real_escape_string($connection,$content);
-        $sql = "INSERT INTO comment (content, img_url, created_time, discussion_id, pre_comment_id, user_id)
-                VALUES ('$content', '$img_url', '". date("Y-m-d h:i"). "', '$discussion_id', '$pre_comment_id', '$user_id' )";
+        $sql = "INSERT INTO comment (content, img_url, created_time, discussion_id, pre_comment_id, user_id, like_number)
+                VALUES ('$content', '$img_url', '". date("Y-m-d h:i"). "', '$discussion_id', '$pre_comment_id', '$user_id', 0 )";
         mysqli_query($connection, $sql);
         $result = array("comment_id"=>$connection->insert_id);
         
@@ -238,5 +239,43 @@ class dbUtil{
         
         mysqli_close($connection);
         return $result;
+    }
+    
+    /*evaluation check*/
+    public static function evaluation_check($comment_id, $user_id){
+        $connection = dbConnection::connect();
+        $sql = "SELECT * FROM evaluation WHERE comment_id='$comment_id' AND user_id='$user_id'";
+        $result = mysqli_query($connection, $sql);
+        mysqli_close($connection);
+        if(mysqli_num_rows($result) == 0){
+            return true;
+        }else{
+            return false;
+        }
+    }
+    
+    /*evaluation updating*/
+    public static function evaluation_update($comment_id, $user_id, $like){
+        if($like==1 && !dbUtil::evaluation_check($comment_id, $user_id)){    // already like this comment
+            return array("error"=>"already like this comment!");
+        }
+        if($like==-1 && dbUtil::evaluation_check($comment_id, $user_id)){    // have not evaluated
+            return array("error"=>"not yet like this comment!");
+        }
+        $connection = dbConnection::connect();
+        if($like==1){   // like this comment
+            $inc_sql = "UPDATE comment SET like_number = like_number + 1 WHERE comment_id='$comment_id'";
+            mysqli_query($connection, $inc_sql);
+            $insert_sql = "INSERT INTO evaluation (comment_id, user_id) VALUES ('$comment_id', '$user_id')";
+            mysqli_query($connection, $insert_sql);
+            mysqli_close($connection);
+        }else{
+            $inc_sql = "UPDATE comment SET like_number = like_number - 1 WHERE comment_id='$comment_id'";
+            mysqli_query($connection, $inc_sql);
+            $delete_sql = "DELETE FROM evaluation WHERE user_id = '$user_id' and comment_id = '$comment_id'";
+            mysqli_query($connection, $delete_sql);
+            mysqli_close($connection);
+        }
+        return array("state"=>"like/unlike success");
     }
 }
