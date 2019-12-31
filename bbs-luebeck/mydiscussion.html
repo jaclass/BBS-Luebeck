@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html xmlns:v-bind="http://www.w3.org/1999/xhtml">
+<head>
+    <title>bihu</title>
+</head>
+<link rel="stylesheet" href="./main.css">
+<script src="https://cdn.staticfile.org/vue/2.2.2/vue.min.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+<script src="https://unpkg.com/element-ui/lib/index.js"></script>
+<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+<script src="https://cdn.bootcss.com/qs/6.5.2/qs.min.js"></script>
+<body class="background">
+<div id="app">
+    <el-row ref="menu" class="menu">
+        <el-col :offset="4" :span="2" style = "cursor: pointer" ><div @click="toRouter('index.html')">LOGO</div></el-col>
+        <el-col :offset="2" :span="4"><div><el-input v-model="keyword" placeholder="type keyword"></el-input></div></el-col>
+        <el-col :span="1"><div><el-button icon="el-icon-search" circle size="middle" @click="searchKey()"></el-button></div></el-col>
+        <el-col :span="2"><div><el-button type="primary" @click="toCreateTopic()">Create a topic</el-button></div></el-col>
+        <el-col :offset="1" :span="1"><div><el-button type="info" icon="el-icon-user" circle @click="toUserDiscussion()"></el-button></div></el-col>
+        <el-col :span="2"><el-button type="danger" @click="logOut()" v-if="sessionStorage.getItem('userid')">Log out</el-button><el-button type="primary" @click="toRouter('register.html')" v-else>Log in</el-button></el-col>
+    </el-row>
+    <el-row :gutter="20" style="top:20px">
+        <el-col :offset="6" :span="10" class="border1">
+            <center>
+                <div style="font-size: 32px; margin-bottom: 20px">
+                    My discussions
+                </div>
+            </center>
+            <div v-if="topics.length==0" style="line-height: 100px; color: gray">
+                You haven't created any discussion yet!
+            </div>
+            <div v-for="(topic,index) in topics">
+                <el-dialog
+                        title="Update discussion"
+                        :visible.sync="dialogVisible"
+                        width="30%"
+                >
+                    <el-form ref="form" :model="newTopic" label-width="80px">
+                        <el-form-item label="Title">
+                            <el-input v-model="newTopic[index].title"></el-input>
+                        </el-form-item>
+                        <el-form-item label="Label">
+                            <el-select v-model="newTopic[index].label" placeholder="Select">
+                                <el-option
+                                        v-for="item in options"
+                                        :key="item"
+                                        :label="item"
+                                        :value="item">
+                                </el-option>
+                            </el-select>
+                        </el-form-item>
+                        <el-form-item label="Content">
+                            <el-input type="textarea" :rows="7" v-model="newTopic[index].content"></el-input>
+                        </el-form-item>
+                    </el-form>
+                    <span slot="footer" class="dialog-footer">
+            <el-button @click="update(false,index)">Cancel</el-button>
+            <el-button type="primary" @click="update(true,index)">Update</el-button>
+            </span>
+                </el-dialog>
+                <el-row class="title">
+                    <div @click="toTopic(index)">{{topic.title}}</div>
+                </el-row>
+                <el-row>
+                    <el-tag type="info">{{topic.created_time}}</el-tag>
+                    <el-tag type="warning">{{topic.label}}</el-tag>
+                </el-row>
+                <el-row>
+                    <div @click="toTopic(index)" style="cursor: pointer">{{topic.content}}</div>
+                </el-row>
+                <el-row>
+                    <el-col :span="24">
+                        <el-row style="padding-bottom: 10px; padding-top: 10px">
+                            <el-button type="primary" size="medium" @click="update()">Update</el-button>
+                            <el-button type="danger" size="medium" @click="dele(index)">Delete</el-button>
+                        </el-row>
+                    </el-col>
+                </el-row>
+                <hr class="line">
+            </div>
+            <center style="cursor: pointer" @click="nextPage()" v-if="topics.length>=10">
+                <div style="font-size: 40px">
+                    <i class="el-icon-bottom"></i>
+                </div>
+                <p style="margin-top: -14px">more pages</p>
+            </center>
+            <center style="cursor: pointer" v-else>
+                <div style="font-size: 40px; color: gray">
+                    <i class="el-icon-bottom"></i>
+                </div>
+                <p style="margin-top: -14px; color: gray">No more pages</p>
+            </center>
+        </el-col>
+    </el-row>
+</div>
+</div>
+
+<script>
+    var app = new Vue({
+        el: '#app',
+        data: {
+            page:1,
+            form:{name:'',desc:''},
+            clientHeight:'',
+            title:'',
+            keyword:'',
+            content:'',
+            label:'',
+            options:['study','Programming','work','sport','life','food','other'],
+            dialogVisible:false,
+            domain:'http://localhost/BBS/BBS_Server/public/',
+            searchKeyword:'',
+            visible:false,
+            topics:[],
+            newTopic:[],
+            discussions:[{id:'1',title:'what',content:'the fuck the fuck the fuck the fuck the fuck ' +
+                    'the fuck the fuck the fuck the fuck the fuck the fuck the fuck the ' +
+                    'fuck the fuck the fuck the fuck the fuck the fuck ' +
+                    'the fuck the fuck the fuck the fuck the fuck the fuck the fuck the fuck ' +
+                    'the fuck the fuck the fuck the fuck the fuck the fuck the fuck the fuck ' +
+                    'the fuck the fuck ',follow:10},
+                {id:'2',title:'what',content:'the fuck',follow:10},
+                {id:'3',title:'what',content:'the fuck',follow:10}],
+            hots:[]
+        },
+        mounted:function () {
+            window.onscroll = function () {
+                app.clientHeight = document.documentElement.scrollTop;
+            }
+            var temp = this;
+            axios.get(this.domain+'discussion/search?page_num=1&user=1')
+                .then(function(response)
+                {
+                    temp.discussions = response.data.discussions;
+                    for(var i=0;i<temp.discussions.length;i++)
+                    {
+                        var o = new Object();
+                        o.id = temp.discussions[i].discussion_id;
+                        o.label = temp.discussions[i].label;
+                        o.created_time = temp.discussions[i].created_time;
+                        o.title = temp.discussions[i].discussion_name;
+                        o.content = temp.discussions[i].discription;
+                        o.follow = temp.discussions[i].comment_number;
+                        var o2 = new Object();
+                        o2.label=o.label;
+                        o2.id = o.id;
+                        o2.content = o.content;
+                        o2.title = o.title;
+                        temp.topics.push(o);
+                        temp.newTopic.push(o2);
+                    }
+                })
+                .catch(function(error)
+                {
+                    temp.$message.error('network error');
+                });
+            //test sample
+        },
+        created:function()
+        {
+
+
+        },
+        watch: {
+            clientHeight:function()
+            {
+                if(app.clientHeight!='')
+                //console.log(document.documentElement.scrollTop);
+                    this.$refs.menu.$el.style.top = app.clientHeight+'px';
+            }
+        },
+        methods:{
+            toTopic:function (index,type) {
+                console.log(index);
+                if(type=='hot') this.toRouter("discussion.html?id="+this.hots[index].id);
+                else this.toRouter("discussion.html?id="+this.topics[index].id);
+            },
+            dele:function(index)
+            {
+                console.log("??")
+                var temp = this;
+                this.$alert('Are you sure to delete this discussion?', 'delete discussion', {
+                    confirmButtonText: 'ok',
+                    callback: action => {
+                        this.$message({
+                            type: 'info',
+                            message: `You have ${ action }ed`
+                        });
+                        axios.put(this.domain+'discussion/delete?discussion_id='+this.topics[index].id)
+                            .then(function(response)
+                            {
+                                location.reload();
+                            })
+                            .catch(function(error)
+                            {
+                                temp.$message.error('network error');
+                            });
+                        //server update
+                    }
+                });
+            },
+            update:function(flag,index)
+            {
+                if(flag==false)
+                {
+                    this.dialogVisible=false;
+                    this.newTopic[index].label = this.topics[index].label;
+                    this.newTopic[index].title = this.topics[index].title;
+                    this.newTopic[index].content = this.topics[index].content;
+                    return;
+                }
+                else if(flag == true)
+                {
+                    var temp = this;
+                    this.dialogVisible=false;
+                    console.log(this.domain+'discussion/update?discussion_name='+this.newTopic[index].title+'&label='+this.newTopic[index].label+'&discription='
+                        +this.newTopic[index].content+'&discussion_id='+this.newTopic[index].id);
+                    axios.put(this.domain+'discussion/update?discussion_name='+this.newTopic[index].title+'&label='+this.newTopic[index].label+'&discription='
+                        +this.newTopic[index].content+'&discussion_id='+this.newTopic[index].id)
+                        .then(function(response)
+                        {
+                            temp.topics[index].label=temp.newTopic[index].label;
+                            temp.topics[index].title=temp.newTopic[index].title;
+                            temp.topics[index].content=temp.newTopic[index].content;
+                        })
+                        .catch(function(error)
+                        {
+                            temp.$message.error('network error');
+                        });
+                    return;
+                }
+                this.dialogVisible=true;
+            },
+            onSubmit:function () {
+                var temp = this;
+                // this.$alert('Are you sure to create a topic?', 'Create a new topic', {
+                //     confirmButtonText: 'ok',
+                //     callback: action => {
+                //         this.$message({
+                //             type: 'info',
+                //             message: `You have ${ action }ed`
+                //         });
+                //         temp.post();
+                //     }
+                // });
+            },
+            toCreateTopic:function()
+            {
+                if(sessionStorage.getItem("userid")!=null)
+                {
+                    this.toRouter("create.html");
+                }
+                else this.toRouter("register.html");
+            },
+            toUser:function()
+            {
+                if(sessionStorage.getItem("userid")!=null)
+                {
+                    this.toRouter("user.html");
+                }
+                else this.toRouter("register.html");
+            },
+            toUserDiscussion:function()
+            {
+                if(sessionStorage.getItem("userid")!=null)
+                {
+                    this.toRouter("mydiscussion.html");
+                }
+                else this.toRouter("register.html");
+            },
+            nextPage:function()
+            {
+                this.page++;
+                var temp = this;
+                axios.get(this.domain+'discussion/search?page_num='+this.page+'&user=1')
+                    .then(function(response)
+                    {
+                        temp.discussions = response.data.discussions;
+                        for(var i=0;i<temp.discussions.length;i++)
+                        {
+                            var o = new Object();
+                            o.id = temp.discussions[i].discussion_id;
+                            o.title = temp.discussions[i].discussion_name;
+                            o.content = temp.discussions[i].discription;
+                            o.follow = temp.discussions[i].comment_number;
+                            temp.topics.push(o);
+                        }
+                        console.log(temp.topics)
+                    })
+                    .catch(function(error)
+                    {
+                        temp.$message.error('network error');
+                    });
+            },
+            toRouter:function (router,value) {
+                var target = location.href;
+                for(var i = target.length-1;i>0;i--)
+                {
+                    //console.log(target[i]);
+                    if(target[i]=='/')
+                    {
+                        target = target.slice(0,i+1);
+                        break;
+                    }
+                }
+                location.href=target+router;
+                console.log(target+router);
+            },
+            logOut:function()
+            {
+                var temp = this;
+                //this.toRouter("index.html")
+                this.$alert('Are you sure to log out?', 'Log out', {
+                    confirmButtonText: 'ok',
+                    callback: action => {
+                        this.$message({
+                            type: 'info',
+                            message: `You have ${ action }ed`
+                        });
+                        if(action!="cancel") {
+
+                            axios.post(this.domain)
+                                .then(function (response) {
+                                    sessionStorage.clear();
+                                    temp.toRouter("index.html")
+                                })
+                                .catch(function (error) {
+                                    temp.$message.error('Network error');
+                                });
+                        }
+                    }
+                });
+            },
+        }
+    })
+</script>
+</body>
+</html>

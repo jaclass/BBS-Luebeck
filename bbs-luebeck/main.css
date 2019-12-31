@@ -1,0 +1,64 @@
+.background
+{
+    background-color: rgb(246,246,246);
+    z-index: -1;
+}
+.border1
+{
+    z-index: 8;
+    background-color: white;
+    box-shadow:0 2px 4px rgba(0, 0, 0, .12), 0 0 6px rgba(0, 0, 0, .04);
+    padding: 10px;
+}
+.title
+{
+    cursor: pointer;
+    font-size: 22px;
+}
+.line
+{
+    color: gray;
+    opacity: 0.2;
+}
+.menu
+{
+    background: white;
+    z-index: 10;
+    box-shadow:0 2px 4px rgba(0, 0, 0, .12), 0 0 6px rgba(0, 0, 0, .04);
+    padding: 10px;
+    opacity: 1.0;
+}
+.username
+{
+    color: gray;
+    font-size: 20px;
+}
+.reply
+{
+    color: gray;
+    font-size: 16px;
+    background: cornsilk;
+}
+.avatar-uploader .el-upload {
+    border: 1px dashed #d9d9d9;
+    border-radius: 6px;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
+.avatar-uploader .el-upload:hover {
+    border-color: #409EFF;
+}
+.avatar-uploader-icon {
+    font-size: 28px;
+    color: #8c939d;
+    width: 178px;
+    height: 178px;
+    line-height: 178px;
+    text-align: center;
+}
+.avatar {
+    width: 178px;
+    height: 178px;
+    display: block;
+}

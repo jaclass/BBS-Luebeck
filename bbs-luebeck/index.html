@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html xmlns:v-bind="http://www.w3.org/1999/xhtml">
+<head>
+  <title>bihu</title>
+</head>
+<link rel="stylesheet" href="./main.css">
+<script src="https://cdn.staticfile.org/vue/2.2.2/vue.min.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+<script src="https://unpkg.com/element-ui/lib/index.js"></script>
+<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+<script src="https://cdn.bootcss.com/qs/6.5.2/qs.min.js"></script>
+<body class="background">
+<div id="app">
+  <el-row ref="menu" class="menu">
+    <el-col :offset="4" :span="2" style = "cursor: pointer" ><div @click="toRouter('index.html')">LOGO</div></el-col>
+    <el-col :offset="2" :span="4"><div><el-input v-model="keyword" placeholder="type keyword"></el-input></div></el-col>
+    <el-col :span="1"><div><el-button icon="el-icon-search" circle size="middle" @click="searchKey()"></el-button></div></el-col>
+    <el-col :span="2"><div><el-button type="primary" @click="toCreateTopic()">Create a topic</el-button></div></el-col>
+    <el-col :offset="1" :span="1"><div><el-button type="info" icon="el-icon-user" circle @click="toUserDiscussion()"></el-button></div></el-col>
+    <el-col :span="2"><el-button type="danger" @click="logOut()" v-if="sessionStorage.getItem('userid')">Log out</el-button><el-button type="primary" @click="toRouter('register.html')" v-else>Log in</el-button></el-col>
+  </el-row>
+  <el-row :gutter="20" style="top:20px">
+    <el-col :offset="6" :span="10" class="border1">
+      <div style="font-size: 20px;cursor: pointer">
+        <i class="el-icon-s-operation" @click="filterVisibility=!filterVisibility"></i>
+        <i class="el-icon-sort" @click="ascorder=!ascorder"></i>
+      </div>
+      <div v-if="filterVisibility" style="font-size: 12px">
+        <el-row>
+          <el-col :span="8">
+            <p>Label: {{filter}}</p>
+            <hr class="line">
+            <div style="cursor:pointer; color: grey; ">
+              <p @click="setFilter('study')">study</p>
+              <p @click="setFilter('programming')">programming</p>
+              <p @click="setFilter('work')">work</p>
+              <p @click="setFilter('sport')">sport</p>
+              <p @click="setFilter('food')">food</p>
+              <p @click="setFilter('other')">other</p>
+            </div>
+          </el-col>
+          <el-col :offset="8" :span="8">
+            <p>Sorted by: {{order}}</p>
+            <hr class="line">
+            <div style="cursor:pointer; color: grey; ">
+              <p @click="setOrder('time')">time</p>
+              <p @click="setOrder('answers')">answers</p>
+            </div>
+          </el-col>
+        </el-row>
+      </div>
+      <div v-for="(topic,index) in topics" v-if="!deleted[index]">
+        <el-row class="title" style="cursor: default">
+            {{topic.title}}
+        </el-row>
+        <el-row>
+            <el-tag type="info">{{topic.created_time}}</el-tag>
+            <el-tag type="warning">{{topic.label}}</el-tag>
+        </el-row>
+        <el-row>
+            {{topic.content}}
+        </el-row>
+        <el-row style="padding-bottom: 10px; padding-top: 10px">
+          <el-col :span="1">
+            <el-button type="primary" size="medium" icon="el-icon-edit-outline" @click="toTopic(index)">
+              Join in
+            </el-button>
+          </el-col>
+        </el-row>
+        <hr class="line">
+      </div>
+      <center style="cursor: pointer" @click="nextPage()" v-if="topics.length>=10">
+        <div style="font-size: 40px">
+          <i class="el-icon-bottom"></i>
+        </div>
+        <p style="margin-top: -14px">more pages</p>
+      </center>
+      <center style="cursor: pointer" v-else>
+        <div style="font-size: 40px; color: gray">
+          <i class="el-icon-bottom"></i>
+        </div>
+        <p style="margin-top: -14px; color: gray">No more pages</p>
+      </center>
+    </el-col>
+<!--    <el-col :offset="1" :span="4" class="border1" style="cursor: pointer">-->
+<!--      <p>Hottest Topic</p>-->
+<!--      <div v-for="(hot,index) in hots" @click="toTopic(index,'hot')">-->
+<!--        <p>{{index+1}}, {{hot.content}}</p>-->
+<!--        <hr class="line">-->
+<!--      </div>-->
+<!--    </el-col>-->
+  </el-row>
+</div>
+</div>
+
+<script>
+  var app = new Vue({
+    el: '#app',
+    data: {
+      page:1,
+      ascorder:false,
+      search:false,
+      keyword:'',
+      filter:'all',
+      order:'time',
+      domain:'http://localhost/BBS/BBS_Server/public/',
+      clientHeight:'',
+      searchKeyword:'',
+      filterVisibility:false,
+      visible:false,
+      topics:[],
+      discussions:[{id:'1',title:'what',content:'the fufuck ',follow:10,created_time:'',label:''}],
+      hots:[],
+      deleted:[],
+    },
+    mounted:function () {
+      window.onscroll = function () {
+        app.clientHeight = document.documentElement.scrollTop;
+      }
+      var temp = this;
+      axios.get(this.domain+'discussion/search?order=created_time&page_num=1&user=0')
+              .then(function(response)
+              {
+                temp.discussions = response.data.discussions;
+                for(var i=0;i<temp.discussions.length;i++)
+                {
+                  var o = new Object();
+                  o.id = temp.discussions[i].discussion_id;
+                  o.label = temp.discussions[i].label;
+                  o.created_time = temp.discussions[i].created_time;
+                  o.title = temp.discussions[i].discussion_name;
+                  o.content = temp.discussions[i].discription;
+                  o.follow = temp.discussions[i].comment_number;
+                  temp.deleted[i]=false;
+                  temp.topics.push(o);
+                }
+              })
+              .catch(function(error)
+              {
+                temp.$message.error('network error');
+              });
+      axios.get(this.domain+'discussion/search?order=comment_number&page_num=1&user=0')
+              .then(function(response)
+              {
+                temp.discussions = response.data.discussions;
+                for(var i=0;i<temp.discussions.length;i++)
+                {
+                  var o = new Object();
+                  o.id = temp.discussions[i].discussion_id;
+                  o.label = temp.discussions[i].label;
+                  o.created_time = temp.discussions[i].created_time;
+                  o.title = temp.discussions[i].discussion_name;
+                  o.content = temp.discussions[i].discription;
+                  o.follow = temp.discussions[i].comment_number;
+                  temp.hots.push(o);
+                }
+              })
+              .catch(function(error)
+              {
+                temp.$message.error('network error');
+              });
+      //test sample
+    },
+    created:function()
+    {
+
+
+    },
+    watch: {
+      clientHeight:function()
+      {
+        if(app.clientHeight!='')
+        //console.log(document.documentElement.scrollTop);
+          this.$refs.menu.$el.style.top = app.clientHeight+'px';
+      }
+    },
+    methods:{
+      toTopic:function (index,type) {
+        if(type=='hot') this.toRouter("discussion.html?id="+this.hots[index].id);
+        else this.toRouter("discussion.html?id="+this.topics[index].id);
+      },
+      toCreateTopic:function()
+      {
+        if(sessionStorage.getItem("userid")!=null)
+        {
+          this.toRouter("create.html");
+        }
+        else this.toRouter("register.html");
+      },
+      toUser:function()
+      {
+        if(sessionStorage.getItem("userid")!=null)
+        {
+          this.toRouter("user.html");
+        }
+        else this.toRouter("register.html");
+      },
+      toUserDiscussion:function()
+      {
+        if(sessionStorage.getItem("userid")!=null)
+        {
+          this.toRouter("mydiscussion.html");
+        }
+        else this.toRouter("register.html");
+      },
+      nextPage:function()
+      {
+        this.page++;
+        var temp = this;
+        var param='user=0&';
+        if(this.search)
+          param+=('discussion_name='+this.keyword);
+        if(this.order=='time')
+          param+='&&order=created_time';
+        else param+='&order=comment_number';
+        if(this.filter!="all")
+          param+=('&label='+this.filter);
+        console.log(this.domain+'discussion/search?'+param+'&page_num='+this.page)
+        axios.get(this.domain+'discussion/search?'+param+'&page_num='+this.page)
+                .then(function(response)
+                {
+                  temp.discussions = response.data.discussions;
+                  for(var i=0;i<temp.discussions.length;i++)
+                  {
+                    var o = new Object();
+                    o.id = temp.discussions[i].discussion_id;
+                    o.title = temp.discussions[i].discussion_name;
+                    o.content = temp.discussions[i].discription;
+                    o.follow = temp.discussions[i].comment_number;
+                    o.label = temp.discussions[i].label;
+                    o.created_time = temp.discussions[i].created_time;
+                    temp.deleted[i] = false;
+                    temp.topics.push(o);
+                  }
+                  console.log(temp.topics)
+                })
+                .catch(function(error)
+                {
+                  temp.$message.error('network error');
+                });
+      },
+      setOrder(order)
+      {
+        this.page=1;
+        if(order==this.order) return;
+        while(this.topics.length!=0) this.topics.pop();
+        this.order=order;
+        var temp = this;
+        var param='';
+        if(this.order=='time')
+          param='&order=created_time';
+        else param='&&order=comment_number';
+        if(this.filter!="all")
+          param+=('&label='+this.filter);
+        console.log(this.domain+'discussion/search?user=0'+param+'&page_num=1')
+        axios.get(this.domain+'discussion/search?user=0'+param+'&page_num=1')
+                .then(function(response)
+                {
+                  console.log(response.data);
+                  temp.discussions = response.data.discussions;
+                  for(var i=0;i<temp.discussions.length;i++) {
+                      var o = new Object();
+                      o.id = temp.discussions[i].discussion_id;
+                      o.title = temp.discussions[i].discussion_name;
+                      o.content = temp.discussions[i].discription;
+                      o.follow = temp.discussions[i].comment_number;
+                      o.label = temp.discussions[i].label;
+                      o.created_time = temp.discussions[i].created_time;
+                      temp.deleted[i] = false;
+                      temp.topics.push(o);
+                  }
+                })
+                .catch(function(error)
+                {
+                  temp.$message.error('network error');
+                });
+      },
+      setFilter(filter)
+      {
+        this.page=1;
+        if(filter==this.filter) return ;
+        this.filter = filter;
+        while(this.topics.length!=0) this.topics.pop();
+        var temp = this;
+        var param='';
+        if(this.order=='time')
+          param='&&order=created_time&label='+filter;
+        else param='&&order=comment_number&label='+filter;
+        console.log(this.domain+'discussion/search?user=0'+param+'&page_num=1')
+        axios.get(this.domain+'discussion/search?user=0'+param+'&page_num=1')
+                .then(function(response)
+                {
+                  console.log(response.data);
+                  temp.discussions = response.data.discussions;
+                  for(var i=0;i<temp.discussions.length;i++) {
+                    var o = new Object();
+                    o.id = temp.discussions[i].discussion_id;
+                    o.title = temp.discussions[i].discussion_name;
+                    o.content = temp.discussions[i].discription;
+                    o.follow = temp.discussions[i].comment_number;
+                    o.label = temp.discussions[i].label;
+                    o.created_time = temp.discussions[i].created_time;
+                    temp.deleted[i] = false;
+                    temp.topics.push(o);
+                  }
+                })
+                .catch(function(error)
+                {
+                  temp.$message.error('network error');
+                });
+      },
+      searchKey:function()
+      {
+        this.search = true;
+        this.page=1;
+        while(this.topics.length!=0) this.topics.pop();
+        var temp = this;
+        var param='discussion_name='+this.keyword;
+        console.log(this.domain+'discussion/search?'+param+'&user=0&page_num=1')
+        axios.get(this.domain+'discussion/search?user=0'+param+'&page_num=1')
+                .then(function(response)
+                {
+                  console.log(response.data);
+                  temp.discussions = response.data.discussions;
+                  for(var i=0;i<temp.discussions.length;i++) {
+                    var o = new Object();
+                    o.id = temp.discussions[i].discussion_id;
+                    o.title = temp.discussions[i].discussion_name;
+                    o.content = temp.discussions[i].discription;
+                    o.follow = temp.discussions[i].comment_number;
+                    o.label = temp.discussions[i].label;
+                    o.created_time = temp.discussions[i].created_time;
+                    temp.deleted[i] = false;
+                    temp.topics.push(o);
+                  }
+                })
+                .catch(function(error)
+                {
+                  temp.$message.error('network error');
+                });
+      },
+      toRouter:function (router,value) {
+        var target = location.href;
+        for(var i = target.length-1;i>0;i--)
+        {
+          //console.log(target[i]);
+          if(target[i]=='/')
+          {
+            target = target.slice(0,i+1);
+            break;
+          }
+        }
+        location.href=target+router;
+        console.log(target+router);
+      },
+      logOut:function()
+      {
+        var temp = this;
+        //this.toRouter("index.html")
+        this.$alert('Are you sure to log out?', 'Log out', {
+          confirmButtonText: 'ok',
+          callback: action => {
+            this.$message({
+              type: 'info',
+              message: `You have ${ action }ed`
+            });
+            if(action!="cancel") {
+
+              axios.post(this.domain)
+                      .then(function (response) {
+                        sessionStorage.clear();
+                        temp.toRouter("index.html")
+                      })
+                      .catch(function (error) {
+                        temp.$message.error('Network error');
+                      });
+            }
+          }
+        });
+      },
+    }
+  })
+</script>
+</body>
+</html>

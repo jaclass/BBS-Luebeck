@@ -12,7 +12,7 @@ require __DIR__ . '/dbconnection/dbUtil.php';
 session_start();
 
 $app = AppFactory::create();
-$COMMON_PATH='/BBS_Server/public/'; /*if the folder BBS_Server is not directly in the htdocs, you need to adjust this*/
+$COMMON_PATH='/BBS/BBS_Server/public/'; /*if the folder BBS_Server is not directly in the htdocs, you need to adjust this*/
 
 
 $app->group($COMMON_PATH.'user', function (RouteCollectorProxy $group) {

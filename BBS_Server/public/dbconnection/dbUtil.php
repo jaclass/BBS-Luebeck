@@ -60,20 +60,18 @@ class dbUtil{
     public static function discussion_search($query_array){
         $num_per_page=10;
         $result_array = array();
+        $cur_page=-1;
         $connection = dbConnection::connect();
         $sql = "SELECT * FROM discussion";
-        $sql_num = "SELECT COUNT(*) FROM discussion";
         $need_where = true;
         if(array_key_exists("discussion_name", $query_array)){  //if query contains discussion_name
             $name = $query_array["discussion_name"];
             $name=mysqli_real_escape_string($connection,$name);
             if($need_where){
                 $sql.=" WHERE";
-                $sql_num.="WHERE";
                 $need_where=false;
             }
             $sql.=" discussion_name like '%$name%'";
-            $sql_num.=" discussion_name like '%$name%'";
         }
         if(array_key_exists("label", $query_array)){    //if query contains label
             $label = $query_array["label"];
@@ -83,42 +81,35 @@ class dbUtil{
                 $need_where=false;
             }else{
                 $sql.=" AND";
-                $sql_num.=" AND";
             }
             $sql.=" label = '$label'";
-            $sql_num.=" label = '$label'";
         }
         if(array_key_exists("user_id", $query_array)){    //if query contains user_id
             $id = $query_array["user_id"];
             if($need_where){
                 $sql.=" WHERE";
-                $sql_num.=" WHERE";
                 $need_where=false;
             }else{
                 $sql.=" AND";
-                $sql_num.=" AND";
             }
             $sql.=" user_id = '$id'";
-            $sql_num.=" user_id = '$id'";
         }
         if(array_key_exists("discussion_id", $query_array)){    //if query contains discussion_id
             $id = $query_array["discussion_id"];
             if($need_where){
                 $sql.=" WHERE";
-                $sql_num.=" WHERE";
                 $need_where=false;
             }else{
                 $sql.=" AND";
-                $sql_num.=" AND";
             }
             $sql.=" discussion_id = '$id'";
-            $sql_num.=" discussion_id = '$id'";
         }
         if(array_key_exists("order", $query_array)){    // oder option
             $order = $query_array["order"];
             $sql.=" ORDER BY $order DESC";
         }
         if(array_key_exists("page_num", $query_array)){
+            $cur_page = $query_array["page_num"];
             $begin = ($query_array["page_num"]-1)*$num_per_page;
             $sql.=" LIMIT $begin , $num_per_page";
         }
@@ -138,9 +129,7 @@ class dbUtil{
             $row_array["user"]=dbUtil::searchUserbyId($row["user_id"]);
             array_push($result_array, $row_array);
         }
-        $num_result = mysqli_query($connection, $sql_num);
-        $num_row = $num_result->fetch_row();
-        $return_array = array("total_num"=>$num_row[0], "discussions"=>$result_array);
+        $return_array = array("cur_page"=>$cur_page, "discussions"=>$result_array);
         mysqli_close($connection);
         return $return_array;
     }

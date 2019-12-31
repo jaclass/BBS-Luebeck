@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Register</title>
+</head>
+<link rel="stylesheet" href="./main.css">
+<script src="https://cdn.staticfile.org/vue/2.2.2/vue.min.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+<script src="https://unpkg.com/element-ui/lib/index.js"></script>
+<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+<script src="https://cdn.bootcss.com/qs/6.5.2/qs.min.js"></script>
+<body class="background">
+<div id="app">
+    <el-row ref="menu" class="menu">
+        <el-col :offset="4" :span="2" style = "cursor: pointer" ><div @click="toRouter('index.html')">LOGO</div></el-col>
+        <el-col :offset="2" :span="4"><div><el-input v-model="keyword" placeholder="type keyword"></el-input></div></el-col>
+        <el-col :span="1"><div><el-button icon="el-icon-search" circle size="middle" @click="searchKey()"></el-button></div></el-col>
+        <el-col :span="2"><div><el-button type="primary" @click="toCreateTopic()">Create a topic</el-button></div></el-col>
+        <el-col :offset="1" :span="1"><div><el-button type="info" icon="el-icon-user" circle @click="toUserDiscussion()"></el-button></div></el-col>
+    </el-row>
+    <el-row v-if="regi" :gutter="20" style="top:20px">
+        <el-col :offset="6" :span="7" class="border1">
+            <el-form ref="form" :model="form" label-width="80px" :rules="rules">
+                <center>
+                    <el-upload
+                            class="avatar-uploader"
+                            action="https://jsonplaceholder.typicode.com/posts/"
+                            :show-file-list="false"
+                            :on-success="handleAvatarSuccess"
+                            :before-upload="beforeAvatarUpload">
+                        <img v-if="imageUrl" :src="imageUrl" class="avatar">
+                        <div v-else class="avatar-uploader-icon">
+                            Your Photo
+                        </div>
+                    </el-upload>
+                </center>
+                <el-form-item label="Username" prop="username">
+                    <el-input v-model="form.username"></el-input>
+                </el-form-item>
+                <el-form-item label="Email" prop="email">
+                    <el-input v-model="form.email" type="email"></el-input>
+                </el-form-item>
+                <el-form-item label="Birthday" >
+                    <el-date-picker
+                            v-model="form.birth"
+                            type="date"
+                            placeholder="select your birthday">
+                    </el-date-picker>
+                </el-form-item>
+                <el-form-item label="Password" prop="password">
+                    <el-input v-model="form.password" type="password"></el-input>
+                </el-form-item>
+                <el-form-item label="Password" prop="password2">
+                    <el-input v-model="form.password2" type="password"></el-input>
+                </el-form-item>
+                <el-form-item>
+                    <el-button type="primary" @click="register">Register</el-button>
+                    <el-button @click="toRegi">Log in with existed account</el-button>
+                </el-form-item>
+            </el-form>
+        </el-col>
+    </el-row>
+    <el-row v-else :gutter="20" style="top:20px">
+        <el-col :offset="6" :span="7" class="border1">
+            <el-form ref="form2" :model="form" label-width="80px">
+                <el-form-item label="Username">
+                    <el-input v-model="form.username"></el-input>
+                </el-form-item>
+                <el-form-item label="Password">
+                    <el-input v-model="form.password" type="password"></el-input>
+                </el-form-item>
+                <el-form-item>
+                    <el-button type="primary" @click="log">Log in</el-button>
+                    <el-button @click="toRegi">Register an account</el-button>
+                </el-form-item>
+            </el-form>
+        </el-col>
+    </el-row>
+</div>
+<script>
+    var validatePass = (rule, value, callback) => {
+        if (value === '') {
+            callback(new Error('please type your password'));
+        } else {
+            if (this.form.password !== '') {
+                this.$refs.ruleForm.validateField('checkPass');
+            }
+            callback();
+        }
+    };
+    var validatePass2 =  (rule, value, callback) => {
+        console.log("asd");
+        if (value === '') {
+            callback(new Error('please type your password again'));
+        } else if (value !== app.form.password) {
+            callback(new Error('different password!'));
+        } else {
+            callback();
+        }
+    };
+    var app = new Vue({
+        el: '#app',
+        data: {
+            form:{username:'',desc:'',password:'',password2:'',email:'',birth:''},
+            regi: true,
+            clientHeight:'',
+            searchKeyword:'',
+            keyword:'',
+            visible:false,
+            imageUrl:'',
+            domain:"http://localhost/BBS/BBS_Server/public/user/",
+            rules: {
+                username: [
+                    { required: true, message: 'your username', trigger: 'change' },
+                    {min:3,max:20,message: '3-20 letters',trigger: 'change'}
+                ],
+                email:[
+                    { required: true, message: 'your email', trigger: 'change' }
+                ],
+                password: [
+                    { required: true, message: 'your password', trigger: 'change' },
+                    {min:5,max:20,message: '5-20 letters',trigger: 'change'}
+                ],
+                password2: [
+                    {required: true, validator: validatePass2, trigger: 'blur' }
+                ],
+            },
+        },
+        mounted:function () {
+            window.onscroll = function () {
+                app.clientHeight = document.documentElement.scrollTop;
+            }
+        },
+        created:function()
+        {
+            console.log(123);
+        },
+        watch: {
+            clientHeight:function()
+            {
+                if(app.clientHeight!='')
+                //console.log(document.documentElement.scrollTop);
+                    this.$refs.menu.$el.style.top = app.clientHeight+'px';
+            }
+        },
+        methods:{
+            handleAvatarSuccess(res, file) {
+                this.imageUrl = URL.createObjectURL(file.raw);
+            },
+            beforeAvatarUpload(file) {
+                const isJPG = file.type === 'image/jpeg';
+                const isLt2M = file.size / 1024 / 1024 < 2;
+
+                if (!isJPG) {
+                    this.$message.error('Only accept jpg!');
+                }
+                if (!isLt2M) {
+                    this.$message.error('Image larger than  2MB!');
+                }
+                return isJPG && isLt2M;
+            },
+            toCreateTopic:function()
+            {
+                if(sessionStorage.getItem("userid")!=null)
+                {
+                    this.toRouter("create.html");
+                }
+                else this.toRouter("register.html");
+            },
+            toUser:function()
+            {
+                if(sessionStorage.getItem("userid")!=null)
+                {
+                    this.toRouter("user.html");
+                }
+                else this.toRouter("register.html");
+            },
+            toUserDiscussion:function()
+            {
+                if(sessionStorage.getItem("userid")!=null)
+                {
+                    this.toRouter("mydiscussion.html");
+                }
+                else this.toRouter("register.html");
+            },
+            toRegi:function () {
+                this.regi=!this.regi;
+            },
+            log: function()
+            {
+                var temp = this;
+                var postData = new Object();
+                postData.username = this.form.username;
+                postData.password = this.form.password;
+
+                axios.get(this.domain+'login/username='+this.form.username+'&&password='+this.form.password)
+                    .then(function (response)
+                    {
+                        sessionStorage.setItem("userid", response.data.id);
+                        sessionStorage.setItem("username", response.data.username);
+                        //temp.$message.error('Success');
+                        temp.toRouter("index.html");
+                    })
+                    .catch(function(error)
+                    {
+                        temp.$message.error('Wrong password');
+                    });
+            },
+            register:function () {
+                var temp = this;
+                var postData = new Object();
+                postData.username = this.form.username;
+                postData.password = this.form.password;
+                postData.img_url="img1";
+                //postData.email = this.form.email;
+                //postData.birth = this.form.birth;
+                this.$refs["form"].validate((valid)=>
+                {
+                    if(valid)
+                    {
+                        console.log(this.domain+'create');
+                        axios.post(this.domain+'create?username='+this.form.username+'&password='+this.form.password+'&img_url=none')
+                            .then(function (response)
+                            {
+                                sessionStorage.setItem("userid", response.data.id);
+                                sessionStorage.setItem("username", response.data.username);
+                                //temp.$message.error('Success');
+                                //post photo
+                                // axios.post(this.domain+'create?username=')
+                                //     .then(function (response)
+                                //     {
+                                //     })
+                                //     .catch(function(error)
+                                //     {
+                                //         temp.$message.error('Network error');
+                                //     });
+                                temp.toRouter("index.html");
+                            })
+                            .catch(function(error)
+                            {
+                                temp.$message.error('Network error');
+                            });
+                    }
+                    else
+                    {
+                        temp.$message.error('Wrong input');
+                    }
+                });
+            },
+            toRouter:function (router,value) {
+                var target = location.href;
+                for(var i = target.length-1;i>0;i--)
+                {
+                    //console.log(target[i]);
+                    if(target[i]=='/')
+                    {
+                        target = target.slice(0,i+1);
+                        break;
+                    }
+                }
+                location.href=target+router;
+                console.log(target+router);
+            }
+        }
+    })
+</script>
+</body>
+</html>
