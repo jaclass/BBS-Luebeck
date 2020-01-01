@@ -15,7 +15,7 @@ class dbUtil{
             return array("error"=>"wrong username or password!");
         }else{
             $row=mysqli_fetch_array($result,MYSQLI_ASSOC);
-            $result = (new user($row['user_id'],$row['username'],$row['password'],$row['photo']))->arrify();
+            $result = (new user($row['user_id'],$row['username'],$row['password']))->arrify();
             mysqli_close($connection);
             return $result;    
         }
@@ -32,14 +32,14 @@ class dbUtil{
             return array("error"=>"search user_id error");
         }else{
             $row=mysqli_fetch_array($result,MYSQLI_ASSOC);
-            $result = (new user($row['user_id'],$row['username'],$row['password'],$row['photo']))->arrify();
+            $result = (new user($row['user_id'],$row['username'],$row['password']))->arrify();
             mysqli_close($connection);
             return $result;
         }
     }
     
     /*user creating*/
-    public static function user_create($username, $password, $img_util){
+    public static function user_create($username, $password){
         $connection = dbConnection::connect();
         $sql = "SELECT * FROM user WHERE username='$username'";
         $result = mysqli_query($connection, $sql);
@@ -47,9 +47,9 @@ class dbUtil{
             mysqli_close($connection);
             return array("error"=>"username already exists!");
         }else{
-            $insert_sql = "INSERT INTO user (username, password, photo) VALUES ('$username', '$password', '$img_util')";
+            $insert_sql = "INSERT INTO user (username, password) VALUES ('$username', '$password')";
             mysqli_query($connection, $insert_sql);
-            $result = (new user($connection->insert_id,$username,$password,$img_util))->arrify();
+            $result = (new user($connection->insert_id,$username,$password))->arrify();
             mysqli_close($connection);
             return $result;
         }
@@ -77,7 +77,6 @@ class dbUtil{
             $label = $query_array["label"];
             if($need_where){
                 $sql.=" WHERE";
-                $sql_num.=" WHERE";
                 $need_where=false;
             }else{
                 $sql.=" AND";

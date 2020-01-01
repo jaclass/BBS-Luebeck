@@ -7,13 +7,11 @@ class user{
     private $id;
     private $username;
     private $password;
-    private $img_url;
     
-    public function __construct($id,$username,$password,$url){
+    public function __construct($id,$username,$password){
         $this->id = $id;
         $this->username = $username;
         $this->password = $password;
-        $this->img_url = $url;
     }
     
     // convert the object into JSON
@@ -23,7 +21,7 @@ class user{
     
     // convert the object into array
     public function arrify(){
-        $data =  array('id' => $this->id, 'username' => $this->username, 'img_url' => $this->img_url);
+        $data =  array('id' => $this->id, 'username' => $this->username);
         return $data;
     }
 }

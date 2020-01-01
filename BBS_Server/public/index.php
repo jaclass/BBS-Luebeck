@@ -32,7 +32,7 @@ $app->group($COMMON_PATH.'user', function (RouteCollectorProxy $group) {
     /* ex: [POST]http://localhost/BBS_Server/public/user/create; with params {user:user,password:password,img_url:img_url} */
     $group->post('/create', function ($request, $response, $args) {
         $params = $request->getQueryParams();
-        $user_json = dbUtil::user_create($params['username'], $params['password'], $params['img_url']);
+        $user_json = dbUtil::user_create($params['username'], $params['password']);
         $response->getBody()->write(json_encode($user_json));
         return $response
             ->withHeader('Content-Type', 'application/json');
@@ -49,12 +49,6 @@ $app->group($COMMON_PATH.'user', function (RouteCollectorProxy $group) {
             ->withHeader('Content-Type', 'application/json');
     });
     
-/*     $group->get('/checksession', function ($request, $response, $args) {
-        $response->getBody()->write(json_encode($_SESSION["user"]));
-        return $response
-            ->withHeader('Content-Type', 'application/json');
-    });
-         */
 
 });
 
