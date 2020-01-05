@@ -17,27 +17,27 @@
 </style>
 <div id="app" v-cloak>
     <el-row ref="menu" class="menu">
-    <el-col :span="2" style = "cursor: pointer" ><div @click="toRouter('index.html')"><img src="lib/logo.png" height="40px"></div></el-col>
-    <el-col :offset="6" :span="7"><div><el-input v-model="keyword" placeholder="type keyword"></el-input></div></el-col>
-    <el-col :span="1"><div><el-button icon="el-icon-search" circle size="middle" @click="searchKey()"></el-button></div></el-col>
-    <el-col :span="8">
-      <div>
-        <el-button type="info" plain @click="logOut()" v-if="sessionStorage.getItem('userid')" style="float: right; margin-left: 20px">Log out</el-button>
-        <el-button type="info" plain @click="toRouter('register.html')" v-else style="float: right; margin-left: 20px">Log in</el-button>
-        <el-button type="info" plain icon="el-icon-user" @click="toUserDiscussion()" style="float: right; margin-left: 20px">
-          <span v-if="sessionStorage.getItem('username')">
-            {{sessionStorage.getItem('username')}}
-          </span>
-          <span v-else>
-            Guest
-          </span>
-        </el-button>
-        <el-button type="primary" @click="toCreateTopic()" style="float: right;" icon="el-icon-plus">Create a topic
-        </el-button>
-      </div>
-    </el-col>
-  </el-row>
-  <el-row>
+        <el-col :span="2" style = "cursor: pointer" ><div @click="toRouter('index.html')"><img src="lib/logo.png" height="40px"></div></el-col>
+        <el-col :offset="6" :span="7"><div><el-input v-model="keyword" placeholder="type keyword"></el-input></div></el-col>
+        <el-col :span="1"><div><el-button icon="el-icon-search" circle size="middle" @click="searchKey()"></el-button></div></el-col>
+        <el-col :span="8">
+          <div>
+            <el-button type="info" plain @click="logOut()" v-if="sessionStorage.getItem('userid')" style="float: right; margin-left: 20px">Log out</el-button>
+            <el-button type="info" plain @click="toRouter('register.html')" v-else style="float: right; margin-left: 20px">Log in</el-button>
+            <el-button type="info" plain icon="el-icon-user" @click="toUserDiscussion()" style="float: right; margin-left: 20px">
+              <span v-if="sessionStorage.getItem('username')">
+                {{sessionStorage.getItem('username')}}
+              </span>
+              <span v-else>
+                Guest
+              </span>
+            </el-button>
+            <el-button type="primary" @click="toCreateTopic()" style="float: right;" icon="el-icon-plus">Create a topic
+            </el-button>
+          </div>
+        </el-col>
+    </el-row>
+  <!-- <el-row>
     <el-dialog
             title="Update phpto"
             :before-close="handleClose"
@@ -62,7 +62,7 @@
             <el-button @click="handleClose">skip</el-button>
         </center>
     </el-dialog>
-  </el-row>
+  </el-row> -->
     <el-row v-if="regi"  v-id="!dialogVisible" :gutter="20" style="top:20px;">
         <el-col :offset="9" :span="6" class="border1">
             <el-form ref="form" :model="form" label-width="80px" :rules="rules">
@@ -139,7 +139,7 @@
         data: {
             form:{username:'',desc:'',password:'',password2:'',email:'',birth:''},
             form2:{usernamee:'',desc:'',passwordd:'',password2:'',email:'',birth:''},
-            regi: false,
+            regi: true,
             clientHeight:'',
             searchKeyword:'',
             dialogVisible:false,
@@ -153,7 +153,7 @@
                     {min:6,max:20,message: '6-20 letters',trigger: 'change'}
                 ],
                 email:[
-                    { required: true, message: 'your email', trigger: 'change' }
+                    { type: 'email',required: true, message: 'your email', trigger: 'change' }
                 ],
                 password: [
                     { required: true, message: 'your password', trigger: 'change' },
@@ -227,7 +227,7 @@
                 else this.toRouter("register.html");
             },
             toRegi:function () {
-                this.toRouter("login.html")
+                this.toRouter("register.html")
             },
             log: function()
             {

@@ -2,6 +2,8 @@
 {
     background-color: rgb(246,246,246);
     z-index: -1;
+    margin:0px;
+    padding:0px;
 }
 .border1
 {
@@ -13,7 +15,7 @@
 .title
 {
     cursor: pointer;
-    font-size: 22px;
+    font-size: 26px;
 }
 .line
 {
@@ -61,4 +63,8 @@
     width: 178px;
     height: 178px;
     display: block;
+}
+
+[v-cloak] {
+    display: none !important;
 }

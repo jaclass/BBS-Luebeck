@@ -1,26 +1,44 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Create topic</title>
+    <title>bbs-luebeck</title>
 </head>
 <link rel="stylesheet" href="./main.css">
-<script src="https://cdn.staticfile.org/vue/2.2.2/vue.min.js"></script>
-<link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
-<script src="https://unpkg.com/element-ui/lib/index.js"></script>
-<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
-<script src="https://cdn.bootcss.com/qs/6.5.2/qs.min.js"></script>
+<script src="lib/vue.min.js"></script>
+<link rel="stylesheet" href="lib/theme-chalk/index.css">
+<script src="lib/index.js"></script>
+<script src="lib/axios.min.js"></script>
+<script src="lib/qs.min.js"></script>
 <body class="background">
-<div id="app">
+<style>
+[v-cloak] {
+  display: none;
+}
+</style>    
+<div id="app" v-cloak>
     <el-row ref="menu" class="menu">
-        <el-col :offset="4" :span="2" style = "cursor: pointer" ><div @click="toRouter('index.html')">LOGO</div></el-col>
-        <el-col :offset="2" :span="4"><div><el-input v-model="keyword" placeholder="type keyword"></el-input></div></el-col>
-        <el-col :span="1"><div><el-button icon="el-icon-search" circle size="middle" @click="searchKey()"></el-button></div></el-col>
-        <el-col :span="2"><div><el-button type="primary" @click="toCreateTopic()">Create a topic</el-button></div></el-col>
-        <el-col :offset="1" :span="1"><div><el-button type="info" icon="el-icon-user" circle @click="toUserDiscussion()"></el-button></div></el-col>
-        <el-col :span="2"><el-button type="danger" @click="logOut()" v-if="sessionStorage.getItem('userid')">Log out</el-button><el-button type="primary" @click="toRouter('register.html')" v-else>Log in</el-button></el-col>
-    </el-row>
+    <el-col :span="2" style = "cursor: pointer" ><div @click="toRouter('index.html')"><img src="lib/logo.png" height="40px"></div></el-col>
+    <el-col :offset="6" :span="7"><div><el-input v-model="keyword" placeholder="type keyword"></el-input></div></el-col>
+    <el-col :span="1"><div><el-button icon="el-icon-search" circle size="middle" @click="searchKey()"></el-button></div></el-col>
+    <el-col :span="8">
+      <div>
+        <el-button type="info" plain @click="logOut()" v-if="sessionStorage.getItem('userid')" style="float: right; margin-left: 20px">Log out</el-button>
+        <el-button type="info" plain @click="toRouter('register.html')" v-else style="float: right; margin-left: 20px">Log in</el-button>
+        <el-button type="info" plain icon="el-icon-user" @click="toUserDiscussion()" style="float: right; margin-left: 20px">
+          <span v-if="sessionStorage.getItem('username')">
+            {{sessionStorage.getItem('username')}}
+          </span>
+          <span v-else>
+            Guest
+          </span>
+        </el-button>
+        <el-button type="primary" @click="toCreateTopic()" style="float: right;" icon="el-icon-plus">Create a topic
+        </el-button>
+      </div>
+    </el-col>
+  </el-row>
     <el-row :gutter="20" style="top:20px">
-        <el-col :offset="6" :span="7" class="border1">
+        <el-col :offset="8" :span="8" class="border1">
             <el-form ref="form" :model="form" label-width="80px" :rules="rules">
                 <el-form-item label="Title" prop="title">
                     <el-input v-model="form.title"></el-input>
@@ -73,7 +91,7 @@
                 ],
                 title:[
                     { required: true, message: 'title can not be empty', trigger: 'change' },
-                    {min:3,max:36,message: '3-36 letters',trigger: 'change'}
+                    {min:5,max:300,message: '5-200 letters',trigger: 'change'}
                 ],
                 content: [
                     { required: true, message: 'content can not be empty', trigger: 'change' },
@@ -174,6 +192,10 @@
                 }
                 location.href=target+router;
                 console.log(target+router);
+            },
+            searchKey:function()
+            {
+                this.toRouter('index.html?'+'search='+this.keyword);
             },
             logOut:function()
             {

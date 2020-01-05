@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Create topic</title>
+    <title>bbs-luebeck</title>
 </head>
 <link rel="stylesheet" href="./main.css">
 <script src="https://cdn.staticfile.org/vue/2.2.2/vue.min.js"></script>
@@ -10,12 +10,17 @@
 <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
 <script src="https://cdn.bootcss.com/qs/6.5.2/qs.min.js"></script>
 <body class="background">
-<div id="app">
+<style>
+[v-cloak] {
+  display: none;
+}
+</style>
+<div id="app" v-cloak>
     <el-row ref="menu" class="menu">
         <el-col :offset="4" :span="2" style = "cursor: pointer" ><div @click="toRouter('index.html')">LOGO</div></el-col>
         <el-col :offset="2" :span="4"><div><el-input v-model="searchKeyword" placeholder="type keyword"></el-input></div></el-col>
         <el-col :span="1"><div><el-button icon="el-icon-search" circle size="middle"></el-button></div></el-col>
-        <el-col :span="2"><div><el-button type="primary" @click="toCreateTopic()">Create a topic</el-button></div></el-col>
+        <el-col :span="2"><div><el-button type="primary" @click="toCreateTopic()" icon="el-icon-plus">Create a topic</el-button></div></el-col>
         <el-col :offset="1" :span="1"><div><el-button type="info" icon="el-icon-chat-dot-square" circle @click="toUserDiscussion()"></el-button></div></el-col>
         <el-col :span="2"><div><el-button type="info" icon="el-icon-user" circle @click="toUser()"></el-button></div></el-col>
     </el-row>

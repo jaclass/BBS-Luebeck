@@ -1,65 +1,87 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>discussion</title>
+    <title>bbs-luebeck</title>
 </head>
 <link rel="stylesheet" href="./main.css">
-<script src="https://cdn.staticfile.org/vue/2.2.2/vue.min.js"></script>
-<link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
-<script src="https://unpkg.com/element-ui/lib/index.js"></script>
-<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
-<script src="https://cdn.bootcss.com/qs/6.5.2/qs.min.js"></script>
+<script src="lib/vue.min.js"></script>
+<link rel="stylesheet" href="lib/theme-chalk/index.css">
+<script src="lib/index.js"></script>
+<script src="lib/axios.min.js"></script>
+<script src="lib/qs.min.js"></script>
 <body class="background">
-<div id="app">
+<style>
+[v-cloak] {
+  display: none;
+}
+</style>
+<div id="app" v-cloak>
     <el-row ref="menu" class="menu">
-        <el-col :offset="4" :span="2" style = "cursor: pointer" ><div @click="toRouter('index.html')">LOGO</div></el-col>
-        <el-col :offset="2" :span="4"><div><el-input v-model="keyword" placeholder="type keyword"></el-input></div></el-col>
-        <el-col :span="1"><div><el-button icon="el-icon-search" circle size="middle" @click="searchKey()"></el-button></div></el-col>
-        <el-col :span="2"><div><el-button type="primary" @click="toCreateTopic()">Create a topic</el-button></div></el-col>
-        <el-col :offset="1" :span="1"><div><el-button type="info" icon="el-icon-user" circle @click="toUserDiscussion()"></el-button></div></el-col>
-        <el-col :span="2"><el-button type="danger" @click="logOut()" v-if="sessionStorage.getItem('userid')">Log out</el-button><el-button type="primary" @click="toRouter('register.html')" v-else>Log in</el-button></el-col>
-    </el-row>
-    <el-row ref="topic" class="border1" style="top:10px">
-        <el-col :offset="6" :span="7">
+    <el-col :span="2" style = "cursor: pointer" ><div @click="toRouter('index.html')"><img src="lib/logo.png" height="40px"></div></el-col>
+    <el-col :offset="6" :span="7"><div><el-input v-model="keyword" placeholder="type keyword"></el-input></div></el-col>
+    <el-col :span="1"><div><el-button icon="el-icon-search" circle size="middle" @click="searchKey()"></el-button></div></el-col>
+    <el-col :span="8">
+      <div>
+        <el-button type="info" plain @click="logOut()" v-if="sessionStorage.getItem('userid')" style="float: right; margin-left: 20px">Log out</el-button>
+        <el-button type="info" plain @click="toRouter('register.html')" v-else style="float: right; margin-left: 20px">Log in</el-button>
+        <el-button type="info" plain icon="el-icon-user" @click="toUserDiscussion()" style="float: right; margin-left: 20px">
+          <span v-if="sessionStorage.getItem('username')">
+            {{sessionStorage.getItem('username')}}
+          </span>
+          <span v-else>
+            Guest
+          </span>
+        </el-button>
+        <el-button type="primary" @click="toCreateTopic()" style="float: right;" icon="el-icon-plus">Create a topic
+        </el-button>
+      </div>
+    </el-col>
+  </el-row>
+    <el-row ref="topic" style="top:10px">
+        <el-col :offset="6" :span="12" class="border1">
             <div>
-                <p class="title">{{topic.title}}</p>
+                <span class="title">{{topic.title}}</span> <br/>
+                <span style="color: grey; font-size: 14px;">
+                    Created by <i>{{topic.username}}</i> at {{topic.created_time}} <el-tag size="mini" type="info">{{topic.label}}</el-tag>
+                </span><br/><br/>
                 <div style="word-break: break-all">{{topic.description}}</div>
-                <el-button type="primary" @click="addAnswer(-1)">answer</el-button>
-                <el-button>follow</el-button>
             </div>
         </el-col>
-        <el-col :span="1" style = "line-height: 0px; border-right: solid 1px rgb(230,230,230)">
+<!--         <el-col :span="1" style = "line-height: 0px; border-right: solid 1px rgb(230,230,230)">
             <p style="color: grey; font-size: 16px">&nbspfollow</p>
             <p style="font-size: 20px">{{follow}}</p>
         </el-col>
         <el-col :span="2" style = "line-height: 0px; padding-left: 8px">
             <p style="color: grey; font-size: 16px">&nbspanswer</p>
             <p style="font-size: 20px">{{answer}}</p>
-        </el-col>
+        </el-col> -->
     </el-row>
-    <el-row :gutter="20" style="top:20px">
-        <el-col :offset="6" :span="10" class="border1">
+    <el-row style="top:20px">
+        <el-col :offset="6" :span="12" class="border1">
             <div v-if="discussions.length==0" style="line-height: 100px; color: gray">
-                empty
+                Np answer for you yet.
             </div>
             <div v-for="(topic,index) in discussions">
                 <el-row>
-                    <el-col :span="2"><i class="el-icon-delete"></i></el-button></el-col>
+                    <el-col :span="1"><i class="el-icon-user"></i></el-button></el-col>
                     <el-col :span="5" class="username">{{topic.create_user.username}}</el-col>
                 </el-row>
                 <el-row v-if="topic.prev_comment" class="reply">
-                    <div style="word-break: break-all">Reply to {{topic.prev_comment.create_user.username}}: {{topic.prev_comment.content}}</div>
+                    <div style="word-break: break-all; margin: 10px">Reply to {{topic.prev_comment.create_user.username}}: {{topic.prev_comment.content}}</div>
                 </el-row>
                 <el-row>
                     <div style="word-break: break-all">{{topic.content}}</div>
                 </el-row>
                 <el-row style="padding-bottom: 10px; padding-top: 10px">
-                    <el-button v-if="topic.isliked_by_user" size="medium" type="primary" @click="agree(index)">{{topic.liked_num}} agreed</el-button>
-                    <el-button v-else size="medium" @click="agree(index)">{{topic.liked_num}} agreed</el-button>
-                    <el-button size="medium" @click="addAnswer(index)">reply</el-button>
+                    <div style="float: right;">
+                        <el-button v-if="topic.isliked_by_user" size="medium" type="text" @click="agree(index)" icon="el-icon-star-on">{{topic.liked_num}} agreed</el-button>
+                        <el-button v-else size="medium" type="text" @click="agree(index)" icon="el-icon-star-off">{{topic.liked_num}} agreed</el-button>
+                        <el-button size="medium" type="text" @click="addAnswer(index)">reply</el-button>
+                    </div>
                 </el-row>
                 <hr class="line">
             </div>
+            <center><el-button type="primary" @click="addAnswer(-1)" icon="el-icon-plus">Add a new answer</el-button></center>
         </el-col>
     </el-row>
 </div>
@@ -77,7 +99,7 @@
             searchKeyword:'',
             map:[],
             visible:false,
-            topic:{title:"how to xxx", description: "I am a student of ECUST, how can I get a better job in alibaba"},
+            topic:{title:"", description: "", username:"", created_time:""},
             discussions:[],
             hots:["a","b","c"]
         },
@@ -108,7 +130,9 @@
                     temp.topic.title=response.data.discussions[0].discussion_name;
                     temp.topic.description=response.data.discussions[0].discription;
                     temp.follow=response.data.discussions[0].comment_number;
-                    temp.answer=response.data.discussions[0].comment_number;
+                    temp.topic.username=response.data.discussions[0].user.username;
+                    temp.topic.created_time=response.data.discussions[0].created_time;
+                    temp.topic.label=response.data.discussions[0].label;
                 })
                 .catch(function(error)
                 {
@@ -170,11 +194,20 @@
                 {
                     //this.toRouter("register.html");
                 }
-                else this.toRouter("register.html");
+                else {this.toRouter("register.html"); return;}
                 console.log(pre);
                 var temp = this;
-                this.$prompt('Input your answer', 'Add your answer', {
+                this.$prompt('Share you idea with others...', 'Add your answer', {
                     inputType:'textarea',
+                    inputValidator: function(val){
+                        if(val==null || val.trim()==""){
+                            return "Your answer cannnot be empty!";
+                        }else if (val.trim().length>5000) {
+                            return "Your answer cannot be longer than 6000 characters, current characters: "+val.trim().length;
+                        }else{
+                            return true;
+                        }
+                    },
                     confirmButtonText: 'ok',
                     cancelButtonText: 'cancel',
                 }).then(({ value }) => {
@@ -219,17 +252,25 @@
                     postData.prev_comment.content = temp.discussions[pre].content;
                     postData.prev_comment.create_user = temp.discussions[pre].create_user;
                 }
-                console.log(postData)
+                console.log(pre)
                 temp.discussions.push(postData);
-                if(pre>0)
+                if(pre>=0)
                     pre=temp.discussions[pre].id;
+                console.log("after: "+pre)
                 //console.log(postData);
                 //postData.email = this.form.email;
                 //postData.birth = this.form.birth;
+                console.log(this.domain+'comment/create?content='+content+'&img_url=&discussion_id='+this.id+'&pre_comment_id='+pre)
                 axios.post(this.domain+'comment/create?content='+content+'&img_url=&discussion_id='+this.id+'&pre_comment_id='+pre)
                     .then(function (response)
                     {
-                        console.log(response)
+                        var data = response.data;
+                        var comment_id = data.comment_id;
+                        //console.log(data.comment_id)
+                        temp.discussions[temp.discussions.length-1].id = comment_id;
+                        //console.log(temp.discussions[temp.discussions.length-1].id)
+                        temp.map[temp.discussions.length-1] = comment_id;
+                        //console.log(temp.discussions.length-1+': '+temp.discussions[temp.discussions.length-1].id+' and' + response.data.​comment_id)
                     })
                     .catch(function(error)
                     {
@@ -257,7 +298,7 @@
                 {
                     //this.toRouter("register.html");
                 }
-                else this.toRouter("register.html");
+                else {this.toRouter("register.html"); return;}
                 console.log(this.map[id]);
                 var liked = 1;
                 if(this.discussions[id].isliked_by_user) {
@@ -302,6 +343,10 @@
                     }
                 });
             },
+            searchKey:function()
+            {
+                this.toRouter('index.html?'+'search='+this.keyword);
+            }
         }
     })
 </script>

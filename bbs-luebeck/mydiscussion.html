@@ -1,29 +1,47 @@
 <!DOCTYPE html>
 <html xmlns:v-bind="http://www.w3.org/1999/xhtml">
 <head>
-    <title>bihu</title>
+    <title>bbs-luebeck</title>
 </head>
 <link rel="stylesheet" href="./main.css">
-<script src="https://cdn.staticfile.org/vue/2.2.2/vue.min.js"></script>
-<link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
-<script src="https://unpkg.com/element-ui/lib/index.js"></script>
-<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
-<script src="https://cdn.bootcss.com/qs/6.5.2/qs.min.js"></script>
+<script src="lib/vue.min.js"></script>
+<link rel="stylesheet" href="lib/theme-chalk/index.css">
+<script src="lib/index.js"></script>
+<script src="lib/axios.min.js"></script>
+<script src="lib/qs.min.js"></script>
 <body class="background">
-<div id="app">
+<style>
+[v-cloak] {
+  display: none;
+}
+</style>
+<div id="app" v-cloak>
     <el-row ref="menu" class="menu">
-        <el-col :offset="4" :span="2" style = "cursor: pointer" ><div @click="toRouter('index.html')">LOGO</div></el-col>
-        <el-col :offset="2" :span="4"><div><el-input v-model="keyword" placeholder="type keyword"></el-input></div></el-col>
-        <el-col :span="1"><div><el-button icon="el-icon-search" circle size="middle" @click="searchKey()"></el-button></div></el-col>
-        <el-col :span="2"><div><el-button type="primary" @click="toCreateTopic()">Create a topic</el-button></div></el-col>
-        <el-col :offset="1" :span="1"><div><el-button type="info" icon="el-icon-user" circle @click="toUserDiscussion()"></el-button></div></el-col>
-        <el-col :span="2"><el-button type="danger" @click="logOut()" v-if="sessionStorage.getItem('userid')">Log out</el-button><el-button type="primary" @click="toRouter('register.html')" v-else>Log in</el-button></el-col>
-    </el-row>
+    <el-col :span="2" style = "cursor: pointer" ><div @click="toRouter('index.html')"><img src="lib/logo.png" height="40px"></div></el-col>
+    <el-col :offset="6" :span="7"><div><el-input v-model="keyword" placeholder="type keyword"></el-input></div></el-col>
+    <el-col :span="1"><div><el-button icon="el-icon-search" circle size="middle" @click="searchKey()"></el-button></div></el-col>
+    <el-col :span="8">
+      <div>
+        <el-button type="info" plain @click="logOut()" v-if="sessionStorage.getItem('userid')" style="float: right; margin-left: 20px">Log out</el-button>
+        <el-button type="info" plain @click="toRouter('register.html')" v-else style="float: right; margin-left: 20px">Log in</el-button>
+        <el-button type="info" plain icon="el-icon-user" @click="toUserDiscussion()" style="float: right; margin-left: 20px">
+          <span v-if="sessionStorage.getItem('username')">
+            {{sessionStorage.getItem('username')}}
+          </span>
+          <span v-else>
+            Guest
+          </span>
+        </el-button>
+        <el-button type="primary" @click="toCreateTopic()" style="float: right;" icon="el-icon-plus">Create a topic
+        </el-button>
+      </div>
+    </el-col>
+  </el-row>
     <el-row :gutter="20" style="top:20px">
         <el-col :offset="6" :span="10" class="border1">
             <center>
                 <div style="font-size: 32px; margin-bottom: 20px">
-                    My discussions
+                    My Discussions
                 </div>
             </center>
             <div v-if="topics.length==0" style="line-height: 100px; color: gray">
@@ -32,15 +50,16 @@
             <div v-for="(topic,index) in topics">
                 <el-dialog
                         title="Update discussion"
+                        :before-close="handleClose"
                         :visible.sync="dialogVisible"
                         width="30%"
                 >
                     <el-form ref="form" :model="newTopic" label-width="80px">
                         <el-form-item label="Title">
-                            <el-input v-model="newTopic[index].title"></el-input>
+                            <el-input v-model="newTopic.title"></el-input>
                         </el-form-item>
                         <el-form-item label="Label">
-                            <el-select v-model="newTopic[index].label" placeholder="Select">
+                            <el-select v-model="newTopic.label" placeholder="Select">
                                 <el-option
                                         v-for="item in options"
                                         :key="item"
@@ -50,7 +69,7 @@
                             </el-select>
                         </el-form-item>
                         <el-form-item label="Content">
-                            <el-input type="textarea" :rows="7" v-model="newTopic[index].content"></el-input>
+                            <el-input type="textarea" :rows="7" v-model="newTopic.content"></el-input>
                         </el-form-item>
                     </el-form>
                     <span slot="footer" class="dialog-footer">
@@ -58,22 +77,27 @@
             <el-button type="primary" @click="update(true,index)">Update</el-button>
             </span>
                 </el-dialog>
-                <el-row class="title">
-                    <div @click="toTopic(index)">{{topic.title}}</div>
+                <el-row class="title" style="cursor: default">
+                    {{topic.title}}
+                    <el-tag size="mini" type="warning">{{topic.label}}</el-tag>
+                    <el-tag size="mini" type="info">{{topic.follow}} answers</el-tag>
+                </el-row>
+                <el-row style="color: grey; font-size: 14px;">
+                    Created at {{topic.created_time}}
                 </el-row>
                 <el-row>
-                    <el-tag type="info">{{topic.created_time}}</el-tag>
-                    <el-tag type="warning">{{topic.label}}</el-tag>
+                    <div style="">{{topic.content}}</div>
                 </el-row>
-                <el-row>
-                    <div @click="toTopic(index)" style="cursor: pointer">{{topic.content}}</div>
-                </el-row>
+
                 <el-row>
                     <el-col :span="24">
-                        <el-row style="padding-bottom: 10px; padding-top: 10px">
-                            <el-button type="primary" size="medium" @click="update()">Update</el-button>
-                            <el-button type="danger" size="medium" @click="dele(index)">Delete</el-button>
-                        </el-row>
+                        <div style="float:right">
+                            <el-row style="padding-bottom: 10px; padding-top: 10px">
+                                <el-button type="primary" size="medium" @click="toTopic(index)" icon="el-icon-s-comment">Join in</el-button>
+                                <el-button type="primary" plain size="medium" @click="update(false,index)" icon="el-icon-edit-outline">Update</el-button>
+                                <el-button size="medium" @click="dele(index)" icon="el-icon-delete-solid">Delete</el-button>
+                            </el-row>
+                        </div>
                     </el-col>
                 </el-row>
                 <hr class="line">
@@ -83,12 +107,6 @@
                     <i class="el-icon-bottom"></i>
                 </div>
                 <p style="margin-top: -14px">more pages</p>
-            </center>
-            <center style="cursor: pointer" v-else>
-                <div style="font-size: 40px; color: gray">
-                    <i class="el-icon-bottom"></i>
-                </div>
-                <p style="margin-top: -14px; color: gray">No more pages</p>
             </center>
         </el-col>
     </el-row>
@@ -106,21 +124,17 @@
             keyword:'',
             content:'',
             label:'',
+            nowindex:0,
             options:['study','Programming','work','sport','life','food','other'],
             dialogVisible:false,
             domain:'http://localhost/BBS/BBS_Server/public/',
             searchKeyword:'',
             visible:false,
             topics:[],
-            newTopic:[],
-            discussions:[{id:'1',title:'what',content:'the fuck the fuck the fuck the fuck the fuck ' +
-                    'the fuck the fuck the fuck the fuck the fuck the fuck the fuck the ' +
-                    'fuck the fuck the fuck the fuck the fuck the fuck ' +
-                    'the fuck the fuck the fuck the fuck the fuck the fuck the fuck the fuck ' +
-                    'the fuck the fuck the fuck the fuck the fuck the fuck the fuck the fuck ' +
-                    'the fuck the fuck ',follow:10},
-                {id:'2',title:'what',content:'the fuck',follow:10},
-                {id:'3',title:'what',content:'the fuck',follow:10}],
+            newTopic:{label:'',title:'',content:''},
+            discussions:[{id:'1',title:'what',content:' ',follow:10},
+                {id:'2',title:'what',content:'',follow:10},
+                {id:'3',title:'what',content:'',follow:10}],
             hots:[]
         },
         mounted:function () {
@@ -147,7 +161,7 @@
                         o2.content = o.content;
                         o2.title = o.title;
                         temp.topics.push(o);
-                        temp.newTopic.push(o2);
+
                     }
                 })
                 .catch(function(error)
@@ -203,25 +217,28 @@
             {
                 if(flag==false)
                 {
-                    this.dialogVisible=false;
-                    this.newTopic[index].label = this.topics[index].label;
-                    this.newTopic[index].title = this.topics[index].title;
-                    this.newTopic[index].content = this.topics[index].content;
+                    this.dialogVisible=!this.dialogVisible;
+                    console.log(index);
+                    if(this.newTopic[index]==undefined)  this.newTopic[index] = new Object();
+                    this.newTopic.label = this.topics[index].label;
+                    this.newTopic.title = this.topics[index].title;
+                    this.newTopic.content = this.topics[index].content;
+                    this.newTopic.id = this.topics[index].id;
+                    this.nowindex = index;
                     return;
                 }
                 else if(flag == true)
                 {
+                    index = this.nowindex;
                     var temp = this;
                     this.dialogVisible=false;
-                    console.log(this.domain+'discussion/update?discussion_name='+this.newTopic[index].title+'&label='+this.newTopic[index].label+'&discription='
-                        +this.newTopic[index].content+'&discussion_id='+this.newTopic[index].id);
-                    axios.put(this.domain+'discussion/update?discussion_name='+this.newTopic[index].title+'&label='+this.newTopic[index].label+'&discription='
-                        +this.newTopic[index].content+'&discussion_id='+this.newTopic[index].id)
+                    axios.put(this.domain+'discussion/update?discussion_name='+this.newTopic.title+'&label='+this.newTopic.label+'&discription='
+                        +this.newTopic.content+'&discussion_id='+this.newTopic.id)
                         .then(function(response)
                         {
-                            temp.topics[index].label=temp.newTopic[index].label;
-                            temp.topics[index].title=temp.newTopic[index].title;
-                            temp.topics[index].content=temp.newTopic[index].content;
+                            temp.topics[index].label=temp.newTopic.label;
+                            temp.topics[index].title=temp.newTopic.title;
+                            temp.topics[index].content=temp.newTopic.content;
                         })
                         .catch(function(error)
                         {
@@ -272,25 +289,44 @@
             {
                 this.page++;
                 var temp = this;
+                console.log(this.domain+'discussion/search?page_num='+this.page+'&user=1')
                 axios.get(this.domain+'discussion/search?page_num='+this.page+'&user=1')
                     .then(function(response)
                     {
+                        console.log(response.data)
                         temp.discussions = response.data.discussions;
-                        for(var i=0;i<temp.discussions.length;i++)
+                        if(temp.discussions.length==0)
                         {
-                            var o = new Object();
-                            o.id = temp.discussions[i].discussion_id;
-                            o.title = temp.discussions[i].discussion_name;
-                            o.content = temp.discussions[i].discription;
-                            o.follow = temp.discussions[i].comment_number;
-                            temp.topics.push(o);
+                            temp.$message("No more pages");
                         }
-                        console.log(temp.topics)
+                        else
+                        {
+                            for(var i=0;i<temp.discussions.length;i++)
+                            {
+                                var o = new Object();
+                                o.id = temp.discussions[i].discussion_id;
+                                o.title = temp.discussions[i].discussion_name;
+                                o.label = temp.discussions[i].label;
+                                o.content = temp.discussions[i].discription;
+                                o.created_time = temp.discussions[i].created_time
+                                o.follow = temp.discussions[i].comment_number;
+                                temp.topics.push(o);
+                                var o2 = new Object();
+                                o2.label=o.label;
+                                o2.id = o.id;
+                                o2.content = o.content;
+                                o2.title = o.title;
+                            }
+                        }
                     })
                     .catch(function(error)
                     {
                         temp.$message.error('network error');
                     });
+            },
+            handleClose:function()
+            {
+                this.dialogVisible=false;
             },
             toRouter:function (router,value) {
                 var target = location.href;
@@ -306,6 +342,10 @@
                 location.href=target+router;
                 console.log(target+router);
             },
+            searchKey:function()
+            {
+                this.toRouter('index.html?'+'search='+this.keyword);
+            },
             logOut:function()
             {
                 var temp = this;
@@ -318,8 +358,7 @@
                             message: `You have ${ action }ed`
                         });
                         if(action!="cancel") {
-
-                            axios.post(this.domain)
+                            axios.post(temp.domain)
                                 .then(function (response) {
                                     sessionStorage.clear();
                                     temp.toRouter("index.html")

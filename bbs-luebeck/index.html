@@ -1,29 +1,46 @@
 <!DOCTYPE html>
 <html xmlns:v-bind="http://www.w3.org/1999/xhtml">
 <head>
-  <title>bihu</title>
+  <title>bbs-luebeck</title>
 </head>
 <link rel="stylesheet" href="./main.css">
-<script src="https://cdn.staticfile.org/vue/2.2.2/vue.min.js"></script>
-<link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
-<script src="https://unpkg.com/element-ui/lib/index.js"></script>
-<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
-<script src="https://cdn.bootcss.com/qs/6.5.2/qs.min.js"></script>
+<script src="lib/vue.min.js"></script>
+<link rel="stylesheet" href="lib/theme-chalk/index.css">
+<script src="lib/index.js"></script>
+<script src="lib/axios.min.js"></script>
+<script src="lib/qs.min.js"></script>
 <body class="background">
-<div id="app">
+<style>
+[v-cloak] {
+  display: none;
+}
+</style>
+<div id="app" v-cloak>
   <el-row ref="menu" class="menu">
-    <el-col :offset="4" :span="2" style = "cursor: pointer" ><div @click="toRouter('index.html')">LOGO</div></el-col>
-    <el-col :offset="2" :span="4"><div><el-input v-model="keyword" placeholder="type keyword"></el-input></div></el-col>
+    <el-col :span="2" style = "cursor: pointer" ><div @click="toRouter('index.html')" ><img src="lib/logo.png" height="40px"></div></el-col>
+    <el-col :offset="6" :span="7"><div><el-input v-model="keyword" placeholder="type keyword"></el-input></div></el-col>
     <el-col :span="1"><div><el-button icon="el-icon-search" circle size="middle" @click="searchKey()"></el-button></div></el-col>
-    <el-col :span="2"><div><el-button type="primary" @click="toCreateTopic()">Create a topic</el-button></div></el-col>
-    <el-col :offset="1" :span="1"><div><el-button type="info" icon="el-icon-user" circle @click="toUserDiscussion()"></el-button></div></el-col>
-    <el-col :span="2"><el-button type="danger" @click="logOut()" v-if="sessionStorage.getItem('userid')">Log out</el-button><el-button type="primary" @click="toRouter('register.html')" v-else>Log in</el-button></el-col>
+    <el-col :span="8">
+      <div>
+        <el-button type="info" plain @click="logOut()" v-if="sessionStorage.getItem('userid')" style="float: right; margin-left: 20px">Log out</el-button>
+        <el-button type="info" plain @click="toRouter('register.html')" v-else style="float: right; margin-left: 20px">Log in</el-button>
+        <el-button type="info" plain icon="el-icon-user" @click="toUserDiscussion()" style="float: right; margin-left: 20px">
+          <span v-if="sessionStorage.getItem('username')">
+            {{sessionStorage.getItem('username')}}
+          </span>
+          <span v-else>
+            Guest
+          </span>
+        </el-button>
+        <el-button type="primary" @click="toCreateTopic()" style="float: right;" icon="el-icon-plus">Create a topic
+        </el-button>
+      </div>
+    </el-col>
   </el-row>
-  <el-row :gutter="20" style="top:20px">
+  <el-row style="top:20px">
     <el-col :offset="6" :span="10" class="border1">
       <div style="font-size: 20px;cursor: pointer">
         <i class="el-icon-s-operation" @click="filterVisibility=!filterVisibility"></i>
-        <i class="el-icon-sort" @click="ascorder=!ascorder"></i>
       </div>
       <div v-if="filterVisibility" style="font-size: 12px">
         <el-row>
@@ -37,6 +54,7 @@
               <p @click="setFilter('sport')">sport</p>
               <p @click="setFilter('food')">food</p>
               <p @click="setFilter('other')">other</p>
+              <p @click="setFilter('all')">all</p>
             </div>
           </el-col>
           <el-col :offset="8" :span="8">
@@ -52,34 +70,32 @@
       <div v-for="(topic,index) in topics" v-if="!deleted[index]">
         <el-row class="title" style="cursor: default">
             {{topic.title}}
+            <el-tag size="mini" type="warning">{{topic.label}}</el-tag>
+            <el-tag size="mini" type="info">{{topic.follow}} answers</el-tag>
         </el-row>
-        <el-row>
-            <el-tag type="info">{{topic.created_time}}</el-tag>
-            <el-tag type="warning">{{topic.label}}</el-tag>
+        <el-row style="color: grey; font-size: 14px;">
+            Created by <i>{{topic.username}}</i> at {{topic.created_time}}
         </el-row>
         <el-row>
             {{topic.content}}
         </el-row>
         <el-row style="padding-bottom: 10px; padding-top: 10px">
-          <el-col :span="1">
-            <el-button type="primary" size="medium" icon="el-icon-edit-outline" @click="toTopic(index)">
+          <div style="float: right;">
+            <el-button type="primary" size="medium" icon="el-icon-s-comment" @click="toTopic(index)">
               Join in
             </el-button>
-          </el-col>
+          </div>
         </el-row>
         <hr class="line">
+      </div>
+      <div v-if="topics.length==0" style="line-height: 100px; color: gray">
+          No such topics. You can create your own topic!
       </div>
       <center style="cursor: pointer" @click="nextPage()" v-if="topics.length>=10">
         <div style="font-size: 40px">
           <i class="el-icon-bottom"></i>
         </div>
         <p style="margin-top: -14px">more pages</p>
-      </center>
-      <center style="cursor: pointer" v-else>
-        <div style="font-size: 40px; color: gray">
-          <i class="el-icon-bottom"></i>
-        </div>
-        <p style="margin-top: -14px; color: gray">No more pages</p>
       </center>
     </el-col>
 <!--    <el-col :offset="1" :span="4" class="border1" style="cursor: pointer">-->
@@ -109,7 +125,7 @@
       filterVisibility:false,
       visible:false,
       topics:[],
-      discussions:[{id:'1',title:'what',content:'the fufuck ',follow:10,created_time:'',label:''}],
+      discussions:[{id:'1',title:'what',content:'the ',follow:10,created_time:'',label:''}],
       hots:[],
       deleted:[],
     },
@@ -117,8 +133,23 @@
       window.onscroll = function () {
         app.clientHeight = document.documentElement.scrollTop;
       }
+      var url = location.href;
+      var search='';
+      for(var i=0;i<url.length;i++)
+      {
+          if(url[i]=='=')
+          {
+              search=url.slice(i+1,url.length);
+              this.search = true;
+              this.keyword = search;
+          }
+      }
+      var param='';
+      if(this.search)
+          param=('&discussion_name='+this.keyword);
       var temp = this;
-      axios.get(this.domain+'discussion/search?order=created_time&page_num=1&user=0')
+      console.log(this.domain+'discussion/search?order=created_time&page_num=1&user=0')
+      axios.get(this.domain+'discussion/search?order=created_time&page_num=1&user=0'+param)
               .then(function(response)
               {
                 temp.discussions = response.data.discussions;
@@ -131,6 +162,7 @@
                   o.title = temp.discussions[i].discussion_name;
                   o.content = temp.discussions[i].discription;
                   o.follow = temp.discussions[i].comment_number;
+                  o.username = temp.discussions[i].user.username;
                   temp.deleted[i]=false;
                   temp.topics.push(o);
                 }
@@ -220,6 +252,11 @@
                 .then(function(response)
                 {
                   temp.discussions = response.data.discussions;
+                  if(temp.discussions.length==0)
+                  {
+                    temp.$message("No more pages");
+                    temp.page--;
+                  }
                   for(var i=0;i<temp.discussions.length;i++)
                   {
                     var o = new Object();
@@ -247,9 +284,11 @@
         this.order=order;
         var temp = this;
         var param='';
+        if(this.search)
+          param+=('&discussion_name='+this.keyword);
         if(this.order=='time')
-          param='&order=created_time';
-        else param='&&order=comment_number';
+          param+='&order=created_time';
+        else param+='&&order=comment_number';
         if(this.filter!="all")
           param+=('&label='+this.filter);
         console.log(this.domain+'discussion/search?user=0'+param+'&page_num=1')
@@ -283,16 +322,22 @@
         while(this.topics.length!=0) this.topics.pop();
         var temp = this;
         var param='';
-        if(this.order=='time')
-          param='&&order=created_time&label='+filter;
-        else param='&&order=comment_number&label='+filter;
-        console.log(this.domain+'discussion/search?user=0'+param+'&page_num=1')
+        if(this.search)
+          param+=('&discussion_name='+this.keyword);
+        if(this.filter!="all")
+        {
+          if(this.order=='time')
+            param+='&&order=created_time&label='+filter;
+          else param+='&&order=comment_number&label='+filter;
+          console.log(this.domain+'discussion/search?user=0'+param+'&page_num=1')
+        }
         axios.get(this.domain+'discussion/search?user=0'+param+'&page_num=1')
                 .then(function(response)
                 {
                   console.log(response.data);
                   temp.discussions = response.data.discussions;
                   for(var i=0;i<temp.discussions.length;i++) {
+                    console.log(">")
                     var o = new Object();
                     o.id = temp.discussions[i].discussion_id;
                     o.title = temp.discussions[i].discussion_name;
@@ -316,11 +361,16 @@
         while(this.topics.length!=0) this.topics.pop();
         var temp = this;
         var param='discussion_name='+this.keyword;
-        console.log(this.domain+'discussion/search?'+param+'&user=0&page_num=1')
-        axios.get(this.domain+'discussion/search?user=0'+param+'&page_num=1')
+        if(this.order=='time')
+          param+='&&order=created_time';
+        else param+='&order=comment_number';
+        if(this.filter!="all")
+          param+=('&label='+this.filter);
+        console.log(this.domain+'discussion/search?user=0&'+param+'&page_num=1')
+        axios.get(this.domain+'discussion/search?user=0&'+param+'&page_num=1')
                 .then(function(response)
                 {
-                  console.log(response.data);
+                  console.log(response.data.discussions.length);
                   temp.discussions = response.data.discussions;
                   for(var i=0;i<temp.discussions.length;i++) {
                     var o = new Object();
