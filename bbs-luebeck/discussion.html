@@ -1,4 +1,8 @@
 <!DOCTYPE html>
+<!-- Author: Shen Yu
+Description: a page to view content of discussion
+Component library: Element Ui, https://element.eleme.cn/#/en-US
+Compiler: Vue.js, https://vuejs.org/ -->
 <html lang="en">
 <head>
     <title>bbs-luebeck</title>
@@ -44,7 +48,7 @@
                 <span style="color: grey; font-size: 14px;">
                     Created by <i>{{topic.username}}</i> at {{topic.created_time}} <el-tag size="mini" type="info">{{topic.label}}</el-tag>
                 </span><br/><br/>
-                <div style="word-break: break-all">{{topic.description}}</div>
+                <div style="text-align:justify;">{{topic.description}}</div>
             </div>
         </el-col>
 <!--         <el-col :span="1" style = "line-height: 0px; border-right: solid 1px rgb(230,230,230)">
@@ -59,18 +63,18 @@
     <el-row style="top:20px">
         <el-col :offset="6" :span="12" class="border1">
             <div v-if="discussions.length==0" style="line-height: 100px; color: gray">
-                Np answer for you yet.
+                No answer for you yet.
             </div>
             <div v-for="(topic,index) in discussions">
-                <el-row>
-                    <el-col :span="1"><i class="el-icon-user"></i></el-button></el-col>
+                <el-row style="margin-bottom:10px">
+                    <el-col :span="1"><i class="el-icon-user" style="vertical-align: middle;"></i></el-button></el-col>
                     <el-col :span="5" class="username">{{topic.create_user.username}}</el-col>
                 </el-row>
-                <el-row v-if="topic.prev_comment" class="reply">
-                    <div style="word-break: break-all; margin: 10px">Reply to {{topic.prev_comment.create_user.username}}: {{topic.prev_comment.content}}</div>
+                <el-row v-if="topic.prev_comment" class="reply" style="border-left: 2px solid #409EFF; background: rgb(217, 236, 255);">
+                    <div style="word-break: break-all; margin: 10px">Reply to {{topic.prev_comment.create_user.username}}: <div style="height:20px;width:100%;overflow:hidden;white-space: nowrap;text-overflow: ellipsis;" v-html="topic.prev_comment.content"></div></div>
                 </el-row>
                 <el-row>
-                    <div style="word-break: break-all">{{topic.content}}</div>
+                    <div style="text-align:justify;"><span v-html="topic.content"></span></div>
                 </el-row>
                 <el-row style="padding-bottom: 10px; padding-top: 10px">
                     <div style="float: right;">
@@ -86,10 +90,11 @@
     </el-row>
 </div>
 <script>
+    //the instance of Vue, used to danamic render the page
     var app = new Vue({
         el: '#app',
         data: {
-            domain:'http://localhost/BBS/BBS_Server/public/',
+            domain:'http://localhost/BBS/BBS_Server/public/',   // if your xammpp doesn't run on default port, you need to specified port
             id:'10',
             follow:0,
             answer:0,
@@ -103,6 +108,7 @@
             discussions:[],
             hots:["a","b","c"]
         },
+        //function  which is called after the page is created
         mounted:function () {
             window.onscroll = function () {
                 app.clientHeight = document.documentElement.scrollTop;
@@ -112,6 +118,7 @@
         {
             this.username = sessionStorage.getItem('username');
             var temp = this;
+            console.log(this.domain+'comment/search?discussion_id='+this.id);
             for(var i=0;i<temp.discussions.length;i++)
             {
                 temp.map[temp.discussions[i].id]=i;
@@ -124,7 +131,7 @@
                     this.id=url.slice(i+1,url.length);
                 }
             }
-            axios.get(this.domain+'discussion/search?discussion_id='+this.id+'&user=0')
+            axios.get(this.domain+'discussion/search?discussion_id='+this.id+'&user=0') //get discussion title
                 .then(function(response)
                 {
                     temp.topic.title=response.data.discussions[0].discussion_name;
@@ -138,13 +145,12 @@
                 {
                     temp.$message.error('network error');
                 });
-            axios.get(this.domain+'comment/search?discussion_id='+this.id)
+            axios.get(this.domain+'comment/search?discussion_id='+this.id)  //get all comments related
                 .then(function(response)
                 {
-                    console.log(response.data)
+
                     for(var i=0;i<response.data.length;i++)
                         temp.discussions.push(response.data[i])
-                    console.log( temp.discussions)
                     for(var i=0;i<temp.discussions.length;i++)
                     {
                         temp.map[temp.discussions[i].id]=i;
@@ -156,10 +162,10 @@
                 });
         },
         watch: {
-            clientHeight:function()
+            clientHeight:function() 
             {
                 if(app.clientHeight!='')
-                //console.log(document.documentElement.scrollTop);
+              
                     this.$refs.menu.$el.style.top = app.clientHeight+'px';
             }
         },
@@ -188,6 +194,7 @@
                 }
                 else this.toRouter("register.html");
             },
+            //function to add a answer in front end
             addAnswer: function(pre)
             {
                 if(sessionStorage.getItem("userid")!=null)
@@ -195,11 +202,12 @@
                     //this.toRouter("register.html");
                 }
                 else {this.toRouter("register.html"); return;}
-                console.log(pre);
+               
                 var temp = this;
                 this.$prompt('Share you idea with others...', 'Add your answer', {
                     inputType:'textarea',
                     inputValidator: function(val){
+
                         if(val==null || val.trim()==""){
                             return "Your answer cannnot be empty!";
                         }else if (val.trim().length>5000) {
@@ -215,6 +223,7 @@
                         type: 'success',
                         message: 'New answer added'
                     });
+                    var value = value.trim().replace(/\n|\r\n/g, "<br/>");
                     if(pre>=0)
                         temp.postAnswer(value,pre);
                         //temp.postAnswer(value,temp.discussions[pre].id);
@@ -226,6 +235,7 @@
                     });
                 });
             },
+            //function to add a answer to server
             postAnswer:function (content,pre) {
                 if(pre==undefined) pre=-1;
                 var temp = this;
@@ -247,30 +257,30 @@
                 };
                 if(pre>=0)
                 {
-                    console.log(pre);
+                  
                     postData.prev_comment = new Object();
                     postData.prev_comment.content = temp.discussions[pre].content;
                     postData.prev_comment.create_user = temp.discussions[pre].create_user;
                 }
-                console.log(pre)
+              
                 temp.discussions.push(postData);
                 if(pre>=0)
                     pre=temp.discussions[pre].id;
-                console.log("after: "+pre)
-                //console.log(postData);
+               
+               
                 //postData.email = this.form.email;
                 //postData.birth = this.form.birth;
-                console.log(this.domain+'comment/create?content='+content+'&img_url=&discussion_id='+this.id+'&pre_comment_id='+pre)
+           
                 axios.post(this.domain+'comment/create?content='+content+'&img_url=&discussion_id='+this.id+'&pre_comment_id='+pre)
                     .then(function (response)
                     {
                         var data = response.data;
                         var comment_id = data.comment_id;
-                        //console.log(data.comment_id)
+                        
                         temp.discussions[temp.discussions.length-1].id = comment_id;
-                        //console.log(temp.discussions[temp.discussions.length-1].id)
+                       
                         temp.map[temp.discussions.length-1] = comment_id;
-                        //console.log(temp.discussions.length-1+': '+temp.discussions[temp.discussions.length-1].id+' and' + response.data.​comment_id)
+                        
                     })
                     .catch(function(error)
                     {
@@ -281,7 +291,7 @@
                 var target = location.href;
                 for(var i = target.length-1;i>0;i--)
                 {
-                    //console.log(target[i]);
+                   
                     if(target[i]=='/')
                     {
                         target = target.slice(0,i+1);
@@ -293,13 +303,14 @@
             previous:function (id) {
                 return "Reply to "+this.discussions[this.map[id]].create_user.username+': "'+this.discussions[this.map[id]].content+' "';
             },
+            //function to add a agree, one user can only agree an answer once.
             agree:function (id) {
                 if(sessionStorage.getItem("userid")!=null)
                 {
                     //this.toRouter("register.html");
                 }
                 else {this.toRouter("register.html"); return;}
-                console.log(this.map[id]);
+                
                 var liked = 1;
                 if(this.discussions[id].isliked_by_user) {
                     liked=-1;
@@ -311,13 +322,14 @@
                 axios.post(this.domain+'comment/like?comment_id='+this.discussions[id].id+'&like='+liked)
                     .then(function (response)
                     {
-                        console.log(response);
+                       
                     })
                     .catch(function(error)
                     {
                         temp.$message.error('Network error');
                     });
             },
+            //function to logout in both server and client
             logOut:function()
             {
                 var temp = this;

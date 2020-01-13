@@ -1,4 +1,8 @@
 <!DOCTYPE html>
+<!-- Author: Shen Yu
+Description: the login page
+Component library: Element Ui, https://element.eleme.cn/#/en-US
+Compiler: Vue.js, https://vuejs.org/ -->
 <html lang="en">
 <head>
     <title>bbs-luebeck</title>
@@ -63,7 +67,7 @@
         </center>
     </el-dialog>
   </el-row>
-    <el-row v-if="regi"  v-id="!dialogVisible" :gutter="20" style="top:20px;">
+    <el-row v-if="regi"  v-id="!dialogVisible"  style="top:20px;">
         <el-col :offset="9" :span="6" class="border1">
             <el-form ref="form" :model="form" label-width="80px" :rules="rules">
                 <el-form-item label="Username" prop="username">
@@ -71,13 +75,6 @@
                 </el-form-item>
                 <el-form-item label="Email" prop="email">
                     <el-input v-model="form.email" type="email"></el-input>
-                </el-form-item>
-                <el-form-item label="Birthday" >
-                    <el-date-picker
-                            v-model="form.birth"
-                            type="date"
-                            placeholder="select your birthday">
-                    </el-date-picker>
                 </el-form-item>
                 <el-form-item label="Password" prop="password">
                     <el-input v-model="form.password" type="password"></el-input>
@@ -94,7 +91,7 @@
             </el-row>
         </el-col>
     </el-row>
-    <el-row v-else :gutter="20" style="top:20px">
+    <el-row v-else style="top:20px">
         <el-col :offset="9" :span="6" class="border1">
             <el-form ref="form2" :model="form2" label-width="80px">
                 <el-form-item label="Username">
@@ -114,6 +111,7 @@
     </el-row>
 </div>
 <script>
+    //function to validate form after submit
     var validatePass = (rule, value, callback) => {
         if (value === '') {
             callback(new Error('please type your password'));
@@ -124,8 +122,9 @@
             callback();
         }
     };
+    //function to validate form after submit
     var validatePass2 =  (rule, value, callback) => {
-        console.log("asd");
+        
         if (value === '') {
             callback(new Error('please type your password again'));
         } else if (value !== app.form.password) {
@@ -134,6 +133,7 @@
             callback();
         }
     };
+    //the instance of Vue, used to danamic render the page
     var app = new Vue({
         el: '#app',
         data: {
@@ -146,11 +146,12 @@
             keyword:'',
             visible:false,
             imageUrl:'',
-            domain:"http://localhost/BBS/BBS_Server/public/user/",
+            domain:"http://localhost/BBS/BBS_Server/public/user/",  // if your xammpp doesn't run on default port, you need to specified port
+            //rules to verify form data
             rules: {
                 username: [
                     { required: true, message: 'your username', trigger: 'change' },
-                    {min:6,max:20,message: '6-20 letters',trigger: 'change'}
+                    {min:6,max:10,message: '6-10 letters',trigger: 'change'}
                 ],
                 email:[
                     { required: true, message: 'your email', trigger: 'change' }
@@ -164,21 +165,20 @@
                 ],
             },
         },
+        //function  which is called after the page is created
         mounted:function () {
             window.onscroll = function () {
                 app.clientHeight = document.documentElement.scrollTop;
             }
-            //this.regi = true;
         },
         created:function()
         {
-            //this.regi = false;
         },
         watch: {
             clientHeight:function()
             {
                 if(app.clientHeight!='')
-                //console.log(document.documentElement.scrollTop);
+              
                     this.$refs.menu.$el.style.top = app.clientHeight+'px';
             }
         },
@@ -229,6 +229,7 @@
             toRegi:function () {
                 this.toRouter("login.html")
             },
+            //function to log in on server
             log: function()
             {
                 var temp = this;
@@ -239,7 +240,7 @@
                 axios.get(this.domain+'login/username='+this.form2.usernamee+'&&password='+this.form2.passwordd)
                     .then(function (response)
                     {
-                        console.log(response.data)
+                      
                         if(response.data.error != undefined)
                         {
                             temp.$message.error(response.data.error);
@@ -257,23 +258,22 @@
                         temp.$message.error('Wrong password');
                     });
             },
+            //function to register on server
             register:function () {
                 var temp = this;
                 var postData = new Object();
                 postData.username = this.form.username;
                 postData.password = this.form.password;
                 postData.img_url="img1";
-                //postData.email = this.form.email;
-                //postData.birth = this.form.birth;
                 this.$refs["form"].validate((valid)=>
                 {
                     if(valid&&temp.form.username.length>=3&&temp.form.username.length<=20)
                     {
-                        console.log(this.domain+'create');
+                        //ajax to register  
                         axios.post(this.domain+'create?username='+this.form.username+'&password='+this.form.password+'&img_url=none')
                             .then(function (response)
                             {
-                                console.log(response);
+                               
                                 if(response.data.error)
                                 {
                                     temp.$message.error(response.data.error);
@@ -282,7 +282,7 @@
                                 {
                                     sessionStorage.setItem("userid", response.data.id);
                                     sessionStorage.setItem("username", response.data.username);
-                                    console.log(temp.domain+'login/username='+temp.form.username+'&&password='+temp.form.password)
+                                    //after register, automaticly log in
                                     axios.get(temp.domain+'login/username='+temp.form.username+'&&password='+temp.form.password)
                                         .then(function (response)
                                         {
@@ -318,7 +318,7 @@
                 var target = location.href;
                 for(var i = target.length-1;i>0;i--)
                 {
-                    //console.log(target[i]);
+                   
                     if(target[i]=='/')
                     {
                         target = target.slice(0,i+1);
@@ -326,7 +326,7 @@
                     }
                 }
                 location.href=target+router;
-                console.log(target+router);
+                
             },
             handleClose:function()
             {

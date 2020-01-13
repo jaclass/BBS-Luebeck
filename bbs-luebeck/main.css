@@ -39,7 +39,8 @@
 {
     color: gray;
     font-size: 16px;
-    background: cornsilk;
+    background:  rgb(217, 236, 255);
+    border-left: 2px solid #409EFF;
 }
 .avatar-uploader .el-upload {
     border: 1px dashed #d9d9d9;
@@ -67,4 +68,8 @@
 
 [v-cloak] {
     display: none !important;
+}
+
+.filter p:hover{
+  color: #409EFF;
 }

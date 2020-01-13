@@ -5,9 +5,7 @@ use Slim\Factory\AppFactory;
 use Slim\Routing\RouteCollectorProxy;
 
 require __DIR__ . '/../vendor/autoload.php';
-require __DIR__ . '/model/discussion.php';
-require __DIR__ . '/model/comment.php';
-require __DIR__ . '/dbconnection/dbUtil.php';
+require __DIR__ . '/controller/dbUtil.php';
 
 session_start();
 

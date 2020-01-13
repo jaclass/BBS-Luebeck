@@ -1,4 +1,8 @@
 <!DOCTYPE html>
+<!-- Author: Shen Yu
+Description: the home page of bbs
+Component library: Element Ui, https://element.eleme.cn/#/en-US
+Compiler: Vue.js, https://vuejs.org/ -->
 <html xmlns:v-bind="http://www.w3.org/1999/xhtml">
 <head>
   <title>bbs-luebeck</title>
@@ -13,6 +17,9 @@
 <style>
 [v-cloak] {
   display: none;
+}
+.filter p:hover{
+  color: #409EFF;
 }
 </style>
 <div id="app" v-cloak>
@@ -47,7 +54,7 @@
           <el-col :span="8">
             <p>Label: {{filter}}</p>
             <hr class="line">
-            <div style="cursor:pointer; color: grey; ">
+            <div class="filter" style="cursor:pointer; color: grey; ">
               <p @click="setFilter('study')">study</p>
               <p @click="setFilter('programming')">programming</p>
               <p @click="setFilter('work')">work</p>
@@ -60,7 +67,7 @@
           <el-col :offset="8" :span="8">
             <p>Sorted by: {{order}}</p>
             <hr class="line">
-            <div style="cursor:pointer; color: grey; ">
+            <div class="filter" style="cursor:pointer; color: grey; ">
               <p @click="setOrder('time')">time</p>
               <p @click="setOrder('answers')">answers</p>
             </div>
@@ -70,8 +77,8 @@
       <div v-for="(topic,index) in topics" v-if="!deleted[index]">
         <el-row class="title" style="cursor: default">
             {{topic.title}}
-            <el-tag size="mini" type="warning">{{topic.label}}</el-tag>
-            <el-tag size="mini" type="info">{{topic.follow}} answers</el-tag>
+            <el-tag size="mini" type="warning" style="vertical-align:5px">{{topic.label}}</el-tag>
+            <el-tag size="mini" type="info" style="vertical-align:5px">{{topic.follow}} answers</el-tag>
         </el-row>
         <el-row style="color: grey; font-size: 14px;">
             Created by <i>{{topic.username}}</i> at {{topic.created_time}}
@@ -95,7 +102,7 @@
         <div style="font-size: 40px">
           <i class="el-icon-bottom"></i>
         </div>
-        <p style="margin-top: -14px">more pages</p>
+        <p style="margin-top: -14px">More Discssuions</p>
       </center>
     </el-col>
 <!--    <el-col :offset="1" :span="4" class="border1" style="cursor: pointer">-->
@@ -110,6 +117,7 @@
 </div>
 
 <script>
+  //the instance of Vue, used to danamic render the page
   var app = new Vue({
     el: '#app',
     data: {
@@ -119,7 +127,7 @@
       keyword:'',
       filter:'all',
       order:'time',
-      domain:'http://localhost/BBS/BBS_Server/public/',
+      domain:'http://localhost/BBS/BBS_Server/public/', // if your xammpp doesn't run on default port, you need to specified port
       clientHeight:'',
       searchKeyword:'',
       filterVisibility:false,
@@ -129,6 +137,7 @@
       hots:[],
       deleted:[],
     },
+    //function  which is called after the page is created
     mounted:function () {
       window.onscroll = function () {
         app.clientHeight = document.documentElement.scrollTop;
@@ -148,7 +157,7 @@
       if(this.search)
           param=('&discussion_name='+this.keyword);
       var temp = this;
-      console.log(this.domain+'discussion/search?order=created_time&page_num=1&user=0')
+      //ajax to get discussion content
       axios.get(this.domain+'discussion/search?order=created_time&page_num=1&user=0'+param)
               .then(function(response)
               {
@@ -202,11 +211,12 @@
       clientHeight:function()
       {
         if(app.clientHeight!='')
-        //console.log(document.documentElement.scrollTop);
+      
           this.$refs.menu.$el.style.top = app.clientHeight+'px';
       }
     },
     methods:{
+      // skip to other routers
       toTopic:function (index,type) {
         if(type=='hot') this.toRouter("discussion.html?id="+this.hots[index].id);
         else this.toRouter("discussion.html?id="+this.topics[index].id);
@@ -235,6 +245,7 @@
         }
         else this.toRouter("register.html");
       },
+      //function to get data of next page
       nextPage:function()
       {
         this.page++;
@@ -247,7 +258,7 @@
         else param+='&order=comment_number';
         if(this.filter!="all")
           param+=('&label='+this.filter);
-        console.log(this.domain+'discussion/search?'+param+'&page_num='+this.page)
+      
         axios.get(this.domain+'discussion/search?'+param+'&page_num='+this.page)
                 .then(function(response)
                 {
@@ -269,13 +280,14 @@
                     temp.deleted[i] = false;
                     temp.topics.push(o);
                   }
-                  console.log(temp.topics)
+                
                 })
                 .catch(function(error)
                 {
                   temp.$message.error('network error');
                 });
       },
+      //function to change the order (by time, by number) of data
       setOrder(order)
       {
         this.page=1;
@@ -291,11 +303,11 @@
         else param+='&&order=comment_number';
         if(this.filter!="all")
           param+=('&label='+this.filter);
-        console.log(this.domain+'discussion/search?user=0'+param+'&page_num=1')
+      
         axios.get(this.domain+'discussion/search?user=0'+param+'&page_num=1')
                 .then(function(response)
                 {
-                  console.log(response.data);
+                 
                   temp.discussions = response.data.discussions;
                   for(var i=0;i<temp.discussions.length;i++) {
                       var o = new Object();
@@ -314,6 +326,7 @@
                   temp.$message.error('network error');
                 });
       },
+      //function to filter data by label
       setFilter(filter)
       {
         this.page=1;
@@ -329,15 +342,18 @@
           if(this.order=='time')
             param+='&&order=created_time&label='+filter;
           else param+='&&order=comment_number&label='+filter;
-          console.log(this.domain+'discussion/search?user=0'+param+'&page_num=1')
+        }else{  // do not specify filter, but order is necessary
+          if(this.order=='time')
+            param+='&&order=created_time';
+          else param+='&&order=comment_number';
         }
         axios.get(this.domain+'discussion/search?user=0'+param+'&page_num=1')
                 .then(function(response)
                 {
-                  console.log(response.data);
+                 
                   temp.discussions = response.data.discussions;
                   for(var i=0;i<temp.discussions.length;i++) {
-                    console.log(">")
+                    
                     var o = new Object();
                     o.id = temp.discussions[i].discussion_id;
                     o.title = temp.discussions[i].discussion_name;
@@ -354,6 +370,7 @@
                   temp.$message.error('network error');
                 });
       },
+      //search specific data
       searchKey:function()
       {
         this.search = true;
@@ -366,11 +383,11 @@
         else param+='&order=comment_number';
         if(this.filter!="all")
           param+=('&label='+this.filter);
-        console.log(this.domain+'discussion/search?user=0&'+param+'&page_num=1')
+       
         axios.get(this.domain+'discussion/search?user=0&'+param+'&page_num=1')
                 .then(function(response)
                 {
-                  console.log(response.data.discussions.length);
+                 
                   temp.discussions = response.data.discussions;
                   for(var i=0;i<temp.discussions.length;i++) {
                     var o = new Object();
@@ -393,7 +410,7 @@
         var target = location.href;
         for(var i = target.length-1;i>0;i--)
         {
-          //console.log(target[i]);
+         
           if(target[i]=='/')
           {
             target = target.slice(0,i+1);
@@ -401,7 +418,7 @@
           }
         }
         location.href=target+router;
-        console.log(target+router);
+        
       },
       logOut:function()
       {

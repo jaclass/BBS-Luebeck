@@ -4,6 +4,8 @@
  * database util class
  */
 require __DIR__ . '/../model/user.php';
+require __DIR__ . '/../model/comment.php';
+require __DIR__ . '/../model/discussion.php';
 require __DIR__ . '/dbConnection.php';
 class dbUtil{
     /*user login*/
